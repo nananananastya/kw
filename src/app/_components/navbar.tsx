@@ -6,17 +6,12 @@ import Link from "next/link";
 
 export function Navbar({ session }: { session: Session}) {
   return (
-    <nav className="bg-gradient-to-r from-purple-500 to-pink-500 py-4 shadow-lg rounded-b-2xl">
+    <nav className="bg-gradient-to-r from-purple-500 to-pink-500 py-4 shadow-lg rounded-b-2xl mb-6">
       <div className="container mx-auto flex items-center justify-between px-4">
         <Link href="/" className="text-white text-2xl font-bold hover:opacity-80 transition-opacity">
           My Finance App
         </Link>
         <ul className="flex space-x-6">
-          <li>
-            <Link href="/home" className="text-white hover:text-gray-200 transition-colors">
-              Домой
-            </Link>
-          </li>
           <li>
             <Link href="/transaction" className="text-white hover:text-gray-200 transition-colors">
               Транзакции

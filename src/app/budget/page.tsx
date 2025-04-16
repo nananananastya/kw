@@ -1,21 +1,36 @@
-import Link from "next/link";
-
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
-import { Navbar } from "./_components/navbar";
-import { SigninLink } from "./_components/signlink";
+import { Header } from "../_components/header";
+import { BudgetSelect } from "../_components/budget/budgetSelect";
+import { db } from "~/server/db";
 
 export default async function Home() {
-
   const session = await auth();
 
+  if (!session?.user) return <div>Ты не авторизован</div>;
+
+  // Получаем все бюджеты, в которых участвует пользователь
+  const budgetUsers = await db.budgetUser.findMany({
+    where: {
+      userId: session.user.id,
+    },
+    include: {
+      budget: true,
+    },
+  });
+
+  // Преобразуем к формату, который ждёт компонент
+  const userBudgets = budgetUsers.map(({ budget }) => ({
+    id: budget.id,
+    name: budget.name,
+  }));
+
   return (
-    <HydrateClient>
-                <h1>новое</h1>
-                <h2>СУПЕР ПУПЕР МЕГА ИЗМЕНЕНИЕ</h2>
-      <header>
-        {session ? <Navbar session={session}/> : <SigninLink/>}
-      </header>
-    </HydrateClient>
+    <div>
+      <Header title="Бюджет" />
+      <BudgetSelect
+        budgets={userBudgets}  // передаем данные как "budgets"
+        selectedBudgetId={null}  // по умолчанию нет выбранного бюджета
+      />
+    </div>
   );
 }
