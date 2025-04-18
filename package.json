@@ -11,7 +11,6 @@
     "db:push": "prisma db push",
     "db:start": "cd prisma && docker compose up",
     "db:studio": "prisma studio",
-    "db:start": "cd prisma && docker compose up",
     "dev": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",

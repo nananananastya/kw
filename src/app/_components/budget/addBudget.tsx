@@ -1,36 +1,44 @@
 'use client';
 
 import { AddEntityModal } from './baseAdd';
-import { createBudget } from '~/app/api/action/budget';
+import { api } from '~/trpc/react';
 
-interface AddBudgetModalProps {
+export interface AddBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBudgetCreated: (budget: { id: string; name: string }) => void;
+  onAddGroup: (groupId: string, groupName: string) => void;
 }
 
 export const AddBudgetModal = ({
   isOpen,
   onClose,
-  onBudgetCreated,
 }: AddBudgetModalProps) => {
-  const handleSubmit = async (formData: FormData) => {
-    const newBudget = await createBudget(formData);
-    onBudgetCreated(newBudget); // сообщаем родителю
-    onClose(); // закрываем модалку
-  };
+  const utils = api.useUtils();
+  const createBudget = api.budget.create.useMutation({
+    onSuccess: async () => {
+      await utils.budget.getUserBudgets.invalidate(); // обновляем список
+      onClose();
+    },
+  });
 
   return (
     <AddEntityModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Новый бюджет"
+      title="Новая группа бюджета"
       fields={[
-        { name: 'name', label: 'Название бюджета', type: 'text', placeholder: 'Например: Учёба' },
-        { name: 'amount', label: 'Сумма бюджета', type: 'number', placeholder: 'Например: 10000' },
+        { name: 'groupName', label: 'Название группы', type: 'text', placeholder: 'Например: Учёба' },
+        { name: 'budgetAmount', label: 'Сумма бюджета', type: 'number', placeholder: 'Введите сумму' },
       ]}
-      onSubmit={handleSubmit}
-      action={createBudget}
+      onSubmit={(values) => {
+        const groupName = values.groupName ?? '';
+        const budgetAmount = parseFloat(values.budgetAmount ?? '0');
+
+        createBudget.mutate({
+          name: groupName,
+          amount: budgetAmount,
+        });
+      }}
     />
   );
 };

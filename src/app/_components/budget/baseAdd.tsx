@@ -4,7 +4,7 @@ import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from 'react';
 import { Button } from '../button';
 import { Input } from '../input';
-import { GoX } from 'react-icons/go';
+import { GoX } from 'react-icons/go'; // Импортируем иконку крестика
 
 interface AddEntityModalProps {
   isOpen: boolean;
@@ -16,8 +16,7 @@ interface AddEntityModalProps {
     type: 'text' | 'number' | 'date';
     placeholder?: string;
   }[];
-  onSubmit: (formData: FormData) => void;
-  action:  (formData: FormData) => Promise<{ id: string; name: string }>; 
+  onSubmit: (values: Record<string, string>) => void;
 }
 
 export const AddEntityModal = ({
@@ -26,12 +25,11 @@ export const AddEntityModal = ({
   title,
   fields,
   onSubmit,
-  action,
 }: AddEntityModalProps) => {
   const [values, setValues] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    // При открытии формы сбрасываем значения
     if (isOpen) {
       const initialValues: Record<string, string> = {};
       fields.forEach(field => {
@@ -45,23 +43,10 @@ export const AddEntityModal = ({
     setValues(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (fields.every(field => values[field.name]?.trim() !== '')) {
-      const formData = new FormData();
-      Object.entries(values).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
-      try {
-        setIsSubmitting(true);
-        await action(formData);
-        onSubmit(formData); // закрываем модалку
-      } catch (error) {
-        console.error('Ошибка при создании:', error);
-        // Можно показать сообщение об ошибке
-      } finally {
-        setIsSubmitting(false);
-      }
+      onSubmit(values);
+      onClose();
     }
   };
 
@@ -91,13 +76,8 @@ export const AddEntityModal = ({
               </div>
             ))}
             <div className="flex justify-center space-x-2 pt-4">
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                className="w-full sm:w-auto"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Добавление...' : 'Добавить'}
+              <Button type="button" onClick={handleSubmit} className="w-full sm:w-auto">
+                Добавить
               </Button>
             </div>
           </div>
