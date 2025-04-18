@@ -189,5 +189,69 @@ export const budgetRouter = createTRPCRouter({
         where: { id: input.id },
       });
     }),
+
+  // Получаем все цели пользователя
+  getUserGoals: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.goal.findMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
+    });
+  }),
+
+// Добавление новой цели для пользователя
+addGoal: protectedProcedure
+  .input(
+    z.object({
+      name: z.string(),
+      targetAmount: z.number(),
+      currentAmount: z.number().optional(),
+      targetDate: z.date(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const goal = await ctx.db.goal.create({
+      data: {
+        name: input.name,
+        targetAmount: input.targetAmount,
+        currentAmount: input.currentAmount ?? 0, // если не передано, ставим 0
+        targetDate: input.targetDate,
+        userId: ctx.session.user.id, // связываем цель с текущим пользователем
+      },
+    });
+
+    return goal; // возвращаем созданную цель
+  }),
+
+  // Обновляем цель
+  updateGoal: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        targetAmount: z.number(),
+        currentAmount: z.number(),
+        targetDate: z.date(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.goal.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+          targetAmount: input.targetAmount,
+          currentAmount: input.currentAmount,
+          targetDate: input.targetDate,
+        },
+      });
+    }),
+
+    deleteGoal: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.goal.delete({
+        where: { id: input.id },
+      });
+    }),
   
 });

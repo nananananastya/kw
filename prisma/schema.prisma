@@ -53,6 +53,7 @@ model User {
     sessions      Session[]
 
     budgets       BudgetUser[]
+    goals         Goal[]
 }
 
 model VerificationToken {
@@ -90,4 +91,15 @@ model Category {
   budgetId    String
 
   budget      Budget        @relation(fields: [budgetId], references: [id])
+}
+
+model Goal {
+  id            String   @id @default(cuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float
+  targetDate    DateTime
+  userId        String
+
+  user      User   @relation(fields: [userId], references: [id])
 }
