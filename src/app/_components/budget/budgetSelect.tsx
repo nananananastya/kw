@@ -5,12 +5,15 @@ import { api } from "~/trpc/react";
 import { InviteUserModal } from './inviteUser';
 import { AddBudgetModal } from './addBudget';
 import { GoPlus, GoPersonAdd, GoTrash } from 'react-icons/go';
+import CategoryList from './categoryList';
+import { AddCategoryModal } from './addCategory';
 
 const BudgetSelect: React.FC = () => {
   const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isAddCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
 
   const deleteBudget = api.budget.deleteBudget.useMutation({
     onSuccess: (data) => {
@@ -23,6 +26,13 @@ const BudgetSelect: React.FC = () => {
       }
     },
   });
+
+  const { mutate: addCategory } = api.budget.addCategoryToBudget.useMutation();
+
+  const handleAddCategory = (name: string, limit: number, budgetId: string) => {
+    addCategory({ name, limit, budgetId }); // Теперь вызываем mutate напрямую
+    setAddCategoryModalOpen(false); // Закрываем модалку после добавления
+  };
 
   const buttonStyle = 'px-4 py-2 rounded-full font-medium transition-colors duration-200 text-sm md:text-base';
   const activeStyle = 'bg-gradient-to-r from-pink-400 to-purple-500 text-white';
@@ -56,7 +66,8 @@ const BudgetSelect: React.FC = () => {
           {selectedGroupId && (
             <button
               onClick={() => {
-                if (selectedGroupId) {
+                const isConfirmed = window.confirm("Точно удалить бюджет?");
+                if (isConfirmed && selectedGroupId) {
                   deleteBudget.mutate({ budgetId: selectedGroupId });
                 }
               }}
@@ -66,9 +77,9 @@ const BudgetSelect: React.FC = () => {
               <GoTrash className="w-5 h-5" />
             </button>
           )}
+
         </div>
       </div>
-
       <div className="flex flex-wrap gap-4">
         {groups.map((group) => (
           <button
@@ -81,7 +92,13 @@ const BudgetSelect: React.FC = () => {
         ))}
       </div>
 
-      {/* Передаем budgetId в InviteUserModal */}
+      {selectedGroupId && (
+        <CategoryList 
+          budgetId={selectedGroupId} 
+          setAddCategoryModalOpen={setAddCategoryModalOpen}  // передаем пропс
+        />
+      )}
+
       <InviteUserModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
@@ -98,6 +115,12 @@ const BudgetSelect: React.FC = () => {
           console.log("Добавлена группа:", id, name);
           // возможно, invalidate или setState
         }}
+      />
+      <AddCategoryModal 
+        isOpen={isAddCategoryModalOpen} 
+        onClose={() => setAddCategoryModalOpen(false)} 
+        onAdd={handleAddCategory} 
+        budgetId={selectedGroupId!}
       />
     </div>
   );

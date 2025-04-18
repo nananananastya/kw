@@ -69,6 +69,7 @@ model Budget {
     amount      Float?
 
     users       BudgetUser[]
+    categories  Category[]
 }
 
 model BudgetUser {
@@ -80,4 +81,13 @@ model BudgetUser {
 
 
     @@id([userId, budgetId])
+}
+
+model Category {
+  id          String        @id @default(cuid())
+  name        String
+  limit       Float
+  budgetId    String
+
+  budget      Budget        @relation(fields: [budgetId], references: [id])
 }

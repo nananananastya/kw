@@ -60,7 +60,7 @@ export const budgetRouter = createTRPCRouter({
       const { email, budgetId } = input;
 
       if (!budgetId) {
-        return { error: 'Бюджет не выбран' }; // Сообщение, если бюджет не выбран
+        return { error: "Бюджет не выбран" }; // Сообщение, если бюджет не выбран
       }
 
       // Ищем пользователя по email
@@ -69,7 +69,7 @@ export const budgetRouter = createTRPCRouter({
       });
 
       if (!user) {
-        return { error: 'Пользователь с таким email не найден' }; // Сообщение, если пользователь не найден
+        return { error: "Пользователь с таким email не найден" }; // Сообщение, если пользователь не найден
       }
 
       // Проверяем, не связан ли уже этот пользователь с этим бюджетом
@@ -81,7 +81,7 @@ export const budgetRouter = createTRPCRouter({
       });
 
       if (existingBudgetUser) {
-        return { error: 'Пользователь уже добавлен в этот бюджет' }; // Сообщение, если пользователь уже добавлен
+        return { error: "Пользователь уже добавлен в этот бюджет" }; // Сообщение, если пользователь уже добавлен
       }
 
       // Добавляем нового пользователя в таблицу budgetuser
@@ -92,7 +92,7 @@ export const budgetRouter = createTRPCRouter({
         },
       });
 
-      return { message: 'Пользователь успешно добавлен в бюджет' }; // Сообщение об успехе
+      return { message: "Пользователь успешно добавлен в бюджет" }; // Сообщение об успехе
     }),
 
   // Удаляем выбранный бюджет
@@ -107,7 +107,7 @@ export const budgetRouter = createTRPCRouter({
       });
 
       if (!budget) {
-        return { error: 'Бюджет не найден' }; // Если бюджет не найден
+        return { error: "Бюджет не найден" }; // Если бюджет не найден
       }
 
       // Удаляем связи с пользователями (если есть)
@@ -122,6 +122,72 @@ export const budgetRouter = createTRPCRouter({
         where: { id: budgetId },
       });
 
-      return { message: 'Бюджет успешно удалён' }; // Сообщение об успешном удалении
+      return { message: "Бюджет успешно удалён" }; // Сообщение об успешном удалении
     }),
+
+  // Получить категории для выбранного бюджета
+  getCategoriesForBudget: protectedProcedure
+    .input(z.string()) // Получаем id бюджета в качестве входных данных
+    .query(async ({ ctx, input }) => {
+      console.log("Budget ID received:", input); // Логируем полученный budgetId
+      const categories = await ctx.db.category.findMany({
+        where: {
+          budgetId: input, // Используем полученный id бюджета
+        },
+      });
+
+      console.log("Categories for budget:", categories); // Логирование для отладки
+
+      return categories; // Возвращаем найденные категории
+    }),
+
+    addCategoryToBudget: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        limit: z.number(),
+        budgetId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { name, limit, budgetId } = input;
+  
+      // Логика для добавления категории
+      const category = await ctx.db.category.create({
+        data: {
+          name,
+          limit,
+          budgetId,
+        },
+      });
+  
+      return category; // Возвращаем созданную категорию
+    }),
+
+      updateCategory: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        limit: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.category.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+          limit: input.limit,
+        },
+      });
+    }),
+
+      deleteCategory: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.category.delete({
+        where: { id: input.id },
+      });
+    }),
+  
 });
