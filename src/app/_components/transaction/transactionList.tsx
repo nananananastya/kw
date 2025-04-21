@@ -1,14 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { api } from '~/trpc/react';
-import { Category, TransactionType } from '@prisma/client';
+import { TransactionType } from '@prisma/client';
 import EditTransactionModal from './EditTransactionModal';
 import { TransactionItem } from './item';
 import { TransactionFilters } from './transactionFilters';
-import { Select } from '../select';
+import Pagination from '~/app/ui/pagination';
 
 export default function TransactionList() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const page = Number(searchParams.get('page')) || 1;
+  const size = Number(searchParams.get('size')) || 5;
+
   const [selectedTransaction, setSelectedTransaction] = useState<null | any>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -19,13 +27,14 @@ export default function TransactionList() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const { data: budgets = [] } = api.budget.getUserBudgets.useQuery();
-  const { data: transactionsRaw = [], refetch } = api.transaction.getUserTransactions.useQuery();
   const { data: categories = [] } = api.transaction.getCategoriesByBudget.useQuery(
     { budgetId: budgetFilter },
     { enabled: !!budgetFilter }
   );
 
-  const transactions = transactionsRaw
+  const { data, refetch } = api.transaction.getUserTransactions.useQuery({ page, size });
+
+  const transactions = (data?.transactions ?? [])
     .filter((t) => {
       const isWithinDateRange =
         (!startDate || new Date(t.date) >= startDate) &&
@@ -43,6 +52,8 @@ export default function TransactionList() {
       }
       return (new Date(a.date).getTime() - new Date(b.date).getTime()) * direction;
     });
+
+  const totalPages = Math.ceil((data?.total ?? 0) / size);
 
   const handleTransactionClick = (id: string | null) => {
     const transaction = transactions.find((t) => t.id === id);
@@ -87,36 +98,38 @@ export default function TransactionList() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    router.push(`${pathname}?${params.toString()}` , { scroll: false });
+  };
+
   return (
     <div className="container mx-auto bg-white p-6 rounded-lg shadow-md mt-6">
       <h2 className="text-xl font-bold mb-4">Транзакции</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        {/* Фильтры */}
         <div className="bg-white p-6 rounded-xl shadow-md">
-
-        <TransactionFilters
-           startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
-          typeFilter={typeFilter}
-          setTypeFilter={setTypeFilter}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          categories={categories}
-          budgets={budgets}
-          budgetFilter={budgetFilter}
-          setBudgetFilter={setBudgetFilter}
-        />
-
+          <TransactionFilters
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            categories={categories}
+            budgets={budgets}
+            budgetFilter={budgetFilter}
+            setBudgetFilter={setBudgetFilter}
+          />
         </div>
 
-        {/* Список транзакций */}
         <div className="bg-white p-6 rounded-xl shadow-md md:col-span-2">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">Список транзакций</h2>
           <ul className="space-y-4">
@@ -128,6 +141,9 @@ export default function TransactionList() {
               />
             ))}
           </ul>
+          <div className="mt-6 flex justify-center">
+            <Pagination totalPages={totalPages} onPageChange={handlePageChange} />
+          </div>
         </div>
       </div>
 
@@ -138,6 +154,8 @@ export default function TransactionList() {
           onSave={handleTransactionSave}
         />
       )}
+
+
     </div>
   );
 }

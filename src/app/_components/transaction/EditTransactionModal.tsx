@@ -5,6 +5,7 @@ import { EditModalWrapper } from '../budget/baseEdit';
 import { DateField } from '../dateField';
 import { Input } from '../input';
 import { Select } from '../select';
+import { api } from '~/trpc/react';
 
 type TransactionFormData = {
   id: string;
@@ -47,68 +48,107 @@ export default function EditTransactionModal({
     onSave(formData);
   };
 
+  const utils = api.useUtils();
+  const deleteMutation = api.transaction.deleteTransaction.useMutation({
+    onSuccess: () => {
+      utils.invalidate();
+      onClose();
+    },
+    onError: (error) => {
+      alert("Ошибка при удалении транзакции: " + error.message);
+    },
+  });
+
+  const handleDelete = () => {
+    if (confirm("Вы уверены, что хотите удалить эту транзакцию?")) {
+      deleteMutation.mutate({ transactionId: transaction.id });
+    }
+  };
+
+
   return (
     <EditModalWrapper
       isOpen={true}
       onClose={onClose}
       onSubmit={handleSubmit}
-      title="Редактировать транзакцию"
+      title="Редактировать"
+      onDelete={handleDelete}
     >
-      <div className="space-y-4">
-        <DateField
-          value={formData.date}
-          onChange={(date: Date | null) => handleChange('date', date)}
-          className="w-full border p-2 rounded"
-        />
+      <div className="space-y-2">
 
-        <Input
-          type="text"
-          value={formData.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-          placeholder="Описание"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Пользователь</label>
+            <input
+              type="text"
+              value={formData.user?.email || 'Не указан'}
+              readOnly
+              placeholder="Пользователь"
+            />
+          </div>
 
-        <Input
-          type="text"
-          value={formData.category?.name ?? ""}
-          onChange={(e) => handleChange('category', e.target.value)}
-          placeholder="Категория"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Бюджет</label>
+              <input
+                type="text"
+                value={formData.budget?.name || 'Не указан'}
+                readOnly
+                placeholder="Бюджет"
+              />
+          </div>
 
-        <Input
-          type="number"
-          value={formData.amount}
-          onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
-          placeholder="Сумма"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Описание</label>
+              <Input
+                type="text"
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                placeholder="Описание"
+              />
+          </div>
 
-        <Select
-          value={formData.type}
-          onChange={(e) =>
-            handleChange('type', e.target.value as 'INCOME' | 'EXPENSE')
-          }
-          options={[
-            { label: 'Доход', value: 'INCOME' },
-            { label: 'Расход', value: 'EXPENSE' },
-          ]}
-          id="transaction-type"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Категория</label>
+              <Input
+                type="text"
+                value={formData.category?.name ?? ""}
+                onChange={(e) => handleChange('category', e.target.value)}
+                placeholder="Категория"
+              />
+          </div>
 
-        {/* Поле для отображения пользователя, создавшего транзакцию */}
-        <input
-          type="text"
-          value={formData.user?.email || 'Не указан'}
-          readOnly
-          placeholder="Пользователь"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Сумма</label>
+              <Input
+                type="number"
+                value={formData.amount}
+                onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
+                placeholder="Сумма"
+              />
+          </div>
 
-        {/* Поле для отображения бюджета, связанного с транзакцией */}
-        <input
-          type="text"
-          value={formData.budget?.name || 'Не указан'}
-          readOnly
-          placeholder="Бюджет"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Тип операции</label>
+              <Select
+                value={formData.type}
+                onChange={(e) =>
+                  handleChange('type', e.target.value as 'INCOME' | 'EXPENSE')
+                }
+                options={[
+                  { label: 'Доход', value: 'INCOME' },
+                  { label: 'Расход', value: 'EXPENSE' },
+                ]}
+                id="transaction-type"
+              />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Дата</label>
+              <DateField
+                value={formData.date}
+                onChange={(date: Date | null) => handleChange('date', date)}
+                className="w-full border p-2 rounded"
+              />
+          </div>
       </div>
     </EditModalWrapper>
   );

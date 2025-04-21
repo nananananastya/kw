@@ -2,30 +2,51 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 
 export const transactionRouter = createTRPCRouter({
-  getUserTransactions: protectedProcedure.query(async ({ ctx }) => {
+// server/api/routers/transaction.ts
+getUserTransactions: protectedProcedure
+  .input(
+    z.object({
+      page: z.number().min(1).default(1),
+      size: z.number().min(1).max(100).default(10),
+    })
+  )
+  .query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
-  
-    // Получаем все ID бюджетов, связанных с пользователем
+    const { page, size } = input;
+
     const userBudgetIds = await ctx.db.budgetUser.findMany({
       where: { userId },
       select: { budgetId: true },
     });
-  
     const budgetIds = userBudgetIds.map((b) => b.budgetId);
-  
-    // Ищем все транзакции в этих бюджетах
-    return ctx.db.transaction.findMany({
-      where: {
-        budgetId: { in: budgetIds },
-      },
-      include: {
-        category: true,
-        budget: true,
-        user: true,
-      },
-      orderBy: { date: "desc" },
-    });
+
+    const [transactions, total] = await Promise.all([
+      ctx.db.transaction.findMany({
+        where: {
+          budgetId: { in: budgetIds },
+        },
+        include: {
+          category: true,
+          budget: true,
+          user: true,
+        },
+        orderBy: { date: "desc" },
+        skip: (page - 1) * size,
+        take: size,
+      }),
+      ctx.db.transaction.count({
+        where: {
+          budgetId: { in: budgetIds },
+        },
+      }),
+    ]);
+
+    return {
+      transactions,
+      total,
+    };
   }),
+
   
 
   // Запрос для получения категорий по бюджету
