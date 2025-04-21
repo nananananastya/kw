@@ -2,12 +2,14 @@
 
 import { AddEntityModal } from './baseAdd';
 import { api } from '~/trpc/react';
+import { toast } from 'react-hot-toast';
+import { TRPCClientError } from '@trpc/client';
 
 interface InviteUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  budgetId: string; // ID выбранного бюджета
-  onInvite: (message: string) => void; // Коллбек для обновления состояния родителя
+  budgetId: string;
+  onInvite: (message: string) => void;
 }
 
 export const InviteUserModal = ({
@@ -16,18 +18,29 @@ export const InviteUserModal = ({
   onInvite,
   budgetId,
 }: InviteUserModalProps) => {
-  // Мутация для приглашения пользователя в бюджет
   const inviteUser = api.budget.inviteToBudget.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
-        alert(data.error); // Показываем ошибку, если есть
-      } else if (data?.message) {
-        alert(data.message); // Показываем успех, если есть
-        onInvite(data.message || 'Пользователь успешно добавлен'); // Вызываем onInvite для обновления состояния
-        onClose(); // Закрываем модальное окно
+        toast.error(data.error); // показываем ошибку, если есть
+        return;
+      }
+  
+      if (data?.message) {
+        toast.success(data.message);
+        onInvite(data.message);
+        onClose();
       }
     },
+    onError: (error) => {
+      // теоретически сюда не попадём, но пусть будет
+      const errorMessage =
+        error instanceof TRPCClientError
+          ? error.message || 'Ошибка при добавлении пользователя'
+          : 'Неизвестная ошибка';
+      toast.error(errorMessage);
+    },
   });
+  
 
   return (
     <AddEntityModal
@@ -46,12 +59,12 @@ export const InviteUserModal = ({
         const email = values.email?.trim();
         if (email) {
           if (!budgetId) {
-            alert('Бюджет не выбран'); // Уведомление, если бюджет не выбран
+            toast.error('Бюджет не выбран'); // Показываем ошибку, если не выбран бюджет
             return;
           }
-          inviteUser.mutate({ email, budgetId }); // Вызов мутации для добавления пользователя в бюджет
+          inviteUser.mutate({ email, budgetId }); // Вызываем мутацию для добавления пользователя
         } else {
-          alert('Введите email пользователя'); // Если email пустой
+          toast.error('Введите email пользователя');
         }
       }}
     />

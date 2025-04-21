@@ -1,17 +1,16 @@
 // src/components/Select.tsx
 interface SelectProps {
-    label: string;
     value: string;
     onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-    options: string[]; // массив опций, который будет передаваться в компонент
-    id: string; // уникальный id для каждого select
-    error?: string; // сообщение об ошибке
+    options: { label: string; value: string }[]; // Массив объектов с полями label и value
+    id: string;
+    error?: string; // Сообщение об ошибке (если есть)
+    disabled?: boolean; // Добавляем пропс disabled
 }
 
-export const Select = ({ label, value, onChange, options, id, error }: SelectProps) => {
+export const Select = ({ value, onChange, options, id, error, disabled }: SelectProps) => {
     return (
         <div className="relative">
-            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <select
                 id={id}
                 className={`mt-1 block w-full rounded-md border-2 p-3 transition-all duration-300 ease-in-out 
@@ -19,10 +18,11 @@ export const Select = ({ label, value, onChange, options, id, error }: SelectPro
                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm`}
                 value={value}
                 onChange={onChange}
+                disabled={disabled} // Добавляем disabled
             >
-                <option value="">Выберите {label.toLowerCase()}</option>
+                <option value="">Выберите</option> {/* Дефолтное значение */}
                 {options.map((option, index) => (
-                    <option key={index} value={option}>{option}</option>
+                    <option key={index} value={option.value}>{option.label}</option>
                 ))}
             </select>
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}

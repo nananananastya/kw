@@ -54,6 +54,7 @@ model User {
 
     budgets       BudgetUser[]
     goals         Goal[]
+    transactions  Transaction[]
 }
 
 model VerificationToken {
@@ -71,6 +72,7 @@ model Budget {
 
     users       BudgetUser[]
     categories  Category[]
+    transactions Transaction[]
 }
 
 model BudgetUser {
@@ -91,6 +93,7 @@ model Category {
   budgetId    String
 
   budget      Budget        @relation(fields: [budgetId], references: [id])
+  transactions  Transaction[]
 }
 
 model Goal {
@@ -102,4 +105,25 @@ model Goal {
   userId        String
 
   user      User   @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id          String           @id @default(cuid())
+  amount      Float
+  date        DateTime         @default(now())
+  description String?
+  type        TransactionType
+
+  categoryId  String
+  budgetId    String
+  userId      String
+
+  budget      Budget           @relation(fields: [budgetId], references: [id])
+  user        User             @relation(fields: [userId], references: [id])
+  category    Category         @relation(fields: [categoryId], references: [id])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
 }

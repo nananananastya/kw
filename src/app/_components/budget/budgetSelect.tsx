@@ -7,6 +7,8 @@ import { AddBudgetModal } from './addBudget';
 import { GoPlus, GoPersonAdd, GoTrash } from 'react-icons/go';
 import CategoryList from './categoryList';
 import { AddCategoryModal } from './addCategory';
+import { toast, Toaster } from 'react-hot-toast'; // Импортируем toast и Toaster
+
 
 const BudgetSelect: React.FC = () => {
   const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery();
@@ -18,9 +20,9 @@ const BudgetSelect: React.FC = () => {
   const deleteBudget = api.budget.deleteBudget.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
-        alert(data.error); // Ошибка при удалении бюджета
+        toast.error(data.error); // Ошибка при удалении бюджета
       } else if (data?.message) {
-        alert(data.message); // Уведомление об успешном удалении
+        toast.success(data.message); // Уведомление об успешном удалении
         setSelectedGroupId(null); // Сбрасываем выбранный бюджет
         refetch(); // Перезапрос данных
       }

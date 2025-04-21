@@ -1,5 +1,6 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 
 export const budgetRouter = createTRPCRouter({
   // Получаем все бюджеты, связанные с пользователем
@@ -53,47 +54,38 @@ export const budgetRouter = createTRPCRouter({
       return budget;
     }),
 
-  // Приглашаем пользователя в бюджет
-  inviteToBudget: protectedProcedure
-    .input(z.object({ email: z.string().email(), budgetId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const { email, budgetId } = input;
+ // Приглашаем пользователя в бюджет
+ inviteToBudget: protectedProcedure
+ .input(z.object({ email: z.string(), budgetId: z.string() }))
+ .mutation(async ({ ctx, input }) => {
+   const { email, budgetId } = input;
 
-      if (!budgetId) {
-        return { error: "Бюджет не выбран" }; // Сообщение, если бюджет не выбран
-      }
+   if (!budgetId) {
+     return { error: 'Бюджет не выбран' };
+   }
 
-      // Ищем пользователя по email
-      const user = await ctx.db.user.findUnique({
-        where: { email },
-      });
+   const user = await ctx.db.user.findUnique({ where: { email } });
+   if (!user) {
+     return { error: 'Пользователь с таким email не найден' };
+   }
 
-      if (!user) {
-        return { error: "Пользователь с таким email не найден" }; // Сообщение, если пользователь не найден
-      }
+   const existingBudgetUser = await ctx.db.budgetUser.findFirst({
+     where: { userId: user.id, budgetId },
+   });
 
-      // Проверяем, не связан ли уже этот пользователь с этим бюджетом
-      const existingBudgetUser = await ctx.db.budgetUser.findFirst({
-        where: {
-          userId: user.id,
-          budgetId: budgetId,
-        },
-      });
+   if (existingBudgetUser) {
+     return { error: 'Пользователь уже добавлен в этот бюджет' };
+   }
 
-      if (existingBudgetUser) {
-        return { error: "Пользователь уже добавлен в этот бюджет" }; // Сообщение, если пользователь уже добавлен
-      }
+   await ctx.db.budgetUser.create({
+     data: {
+       userId: user.id,
+       budgetId,
+     },
+   });
 
-      // Добавляем нового пользователя в таблицу budgetuser
-      await ctx.db.budgetUser.create({
-        data: {
-          userId: user.id,
-          budgetId: budgetId,
-        },
-      });
-
-      return { message: "Пользователь успешно добавлен в бюджет" }; // Сообщение об успехе
-    }),
+   return { message: 'Пользователь успешно добавлен в бюджет' };
+ }),
 
   // Удаляем выбранный бюджет
   deleteBudget: protectedProcedure

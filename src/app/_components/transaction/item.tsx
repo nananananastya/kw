@@ -1,0 +1,43 @@
+import React from 'react';
+
+type TransactionItemProps = {
+  transaction: {
+    id: string;
+    date: Date; // теперь это объект Date
+    description: string | null;
+    category: { id: string; name: string } | null;
+    amount: number;
+    type: "INCOME" | "EXPENSE";
+  };
+  onClick: (id: string | null) => void;
+};
+
+export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, onClick }) => {
+  const isIncome = transaction.type === "INCOME";
+
+  const formattedDate = transaction.date.toLocaleDateString("ru-RU");
+  const formattedAmount = `${isIncome ? "+" : "-"}₽${transaction.amount.toFixed(2)}`;
+
+  console.log("Transaction Date:", formattedDate);
+
+  return (
+    <div
+      className="container mx-auto w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 cursor-pointer border-b"
+      onClick={() => onClick(transaction.id)}
+    >
+      {/* Левая часть — описание и дата */}
+      <div className="flex flex-col text-left">
+        <span className="text-sm text-gray-500">{formattedDate}</span>
+        <span className="text-lg font-medium text-gray-800">{transaction.description || "Без описания"}</span>
+      </div>
+
+      {/* Правая часть — сумма и категория */}
+      <div className="flex flex-col items-end text-right">
+        <span className={`text-base font-semibold ${isIncome ? "text-purple-600" : "text-pink-600"}`}>
+          {formattedAmount}
+        </span>
+        <span className="text-xs text-gray-500">{transaction.category?.name}</span>
+      </div>
+    </div>
+  );
+};
