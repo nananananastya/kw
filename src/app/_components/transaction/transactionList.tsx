@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { api } from '~/trpc/react';
 import { TransactionType } from '@prisma/client';
@@ -9,7 +9,7 @@ import { TransactionItem } from './item';
 import { TransactionFilters } from './transactionFilters';
 import Pagination from '~/app/ui/pagination';
 
-export default function TransactionList() {
+export function TransactionList() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -18,6 +18,7 @@ export default function TransactionList() {
   const size = Number(searchParams.get('size')) || 5;
 
   const [selectedTransaction, setSelectedTransaction] = useState<null | any>(null);
+
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budgetFilter, setBudgetFilter] = useState<string>('');
@@ -32,27 +33,19 @@ export default function TransactionList() {
     { enabled: !!budgetFilter }
   );
 
-  const { data, refetch } = api.transaction.getUserTransactions.useQuery({ page, size });
+  const { data, refetch, isLoading } = api.transaction.getUserTransactions.useQuery({
+    page,
+    size,
+    startDate: startDate ?? undefined,
+    endDate: endDate ?? undefined,
+    budgetId: budgetFilter || undefined,
+    categoryId: categoryFilter || undefined,
+    type: typeFilter || undefined,
+    sortBy,
+    sortOrder,
+  });
 
-  const transactions = (data?.transactions ?? [])
-    .filter((t) => {
-      const isWithinDateRange =
-        (!startDate || new Date(t.date) >= startDate) &&
-        (!endDate || new Date(t.date) <= endDate);
-      const isMatchingBudget = budgetFilter ? t.budget?.id === budgetFilter : true;
-      const isMatchingCategory = categoryFilter ? t.category?.id === categoryFilter : true;
-      const isMatchingType = typeFilter ? t.type === typeFilter : true;
-
-      return isWithinDateRange && isMatchingBudget && isMatchingCategory && isMatchingType;
-    })
-    .sort((a, b) => {
-      const direction = sortOrder === 'asc' ? 1 : -1;
-      if (sortBy === 'amount') {
-        return (a.amount - b.amount) * direction;
-      }
-      return (new Date(a.date).getTime() - new Date(b.date).getTime()) * direction;
-    });
-
+  const transactions = data?.transactions ?? [];
   const totalPages = Math.ceil((data?.total ?? 0) / size);
 
   const handleTransactionClick = (id: string | null) => {
@@ -101,8 +94,12 @@ export default function TransactionList() {
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', newPage.toString());
-    router.push(`${pathname}?${params.toString()}` , { scroll: false });
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
+
+  useEffect(() => {
+    refetch();
+  }, [startDate, endDate, budgetFilter, categoryFilter, typeFilter, sortBy, sortOrder]);
 
   return (
     <div className="container mx-auto bg-white p-6 rounded-lg shadow-md mt-6">
@@ -132,18 +129,24 @@ export default function TransactionList() {
 
         <div className="bg-white p-6 rounded-xl shadow-md md:col-span-2">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">Список транзакций</h2>
-          <ul className="space-y-4">
-            {transactions.map((transaction) => (
-              <TransactionItem
-                key={transaction.id}
-                transaction={transaction}
-                onClick={() => handleTransactionClick(transaction.id)}
-              />
-            ))}
-          </ul>
-          <div className="mt-6 flex justify-center">
-            <Pagination totalPages={totalPages} onPageChange={handlePageChange} />
-          </div>
+          {isLoading ? (
+            <p>Загрузка...</p>
+          ) : (
+            <>
+              <ul className="space-y-4">
+                {transactions.map((transaction) => (
+                  <TransactionItem
+                    key={transaction.id}
+                    transaction={transaction}
+                    onClick={() => handleTransactionClick(transaction.id)}
+                  />
+                ))}
+              </ul>
+              <div className="mt-6 flex justify-center">
+                <Pagination totalPages={totalPages} onPageChange={handlePageChange} />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -154,8 +157,6 @@ export default function TransactionList() {
           onSave={handleTransactionSave}
         />
       )}
-
-
     </div>
   );
 }

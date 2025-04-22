@@ -101,7 +101,7 @@ interface TransactionFiltersProps {
             <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'amount' | 'date')}
-              options={sortByOptions.map(option => ({ label: option, value: option }))}
+              options={sortByOptions.map(option => ({ label: option === 'amount' ? 'Сумма' : 'Дата', value: option }))}
               id="sort-by-filter"
             />
           </div>

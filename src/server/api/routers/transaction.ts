@@ -1,18 +1,35 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
+import { Prisma, TransactionType } from "@prisma/client"; 
 
 export const transactionRouter = createTRPCRouter({
-// server/api/routers/transaction.ts
 getUserTransactions: protectedProcedure
   .input(
     z.object({
-      page: z.number().min(1).default(1),
-      size: z.number().min(1).max(100).default(10),
+      page: z.coerce.number().min(1).default(1),
+      size: z.coerce.number().min(1).max(100).default(10),
+      startDate: z.coerce.date().optional(),
+      endDate: z.coerce.date().optional(),
+      budgetId: z.string().optional(),
+      categoryId: z.string().optional(),
+      type: z.nativeEnum(TransactionType).optional(),
+      sortBy: z.enum(['date', 'amount']).default('date'),
+      sortOrder: z.enum(['asc', 'desc']).default('desc'),
     })
   )
   .query(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
-    const { page, size } = input;
+    const {
+      page,
+      size,
+      startDate,
+      endDate,
+      budgetId,
+      categoryId,
+      type,
+      sortBy,
+      sortOrder,
+    } = input;
 
     const userBudgetIds = await ctx.db.budgetUser.findMany({
       where: { userId },
@@ -20,25 +37,36 @@ getUserTransactions: protectedProcedure
     });
     const budgetIds = userBudgetIds.map((b) => b.budgetId);
 
+    const where: Prisma.TransactionWhereInput = {
+      budgetId: budgetId
+        ? { equals: budgetId }
+        : { in: budgetIds },
+
+      ...(categoryId && { categoryId }),
+      ...(type && { type }),
+      ...(startDate || endDate
+        ? {
+            date: {
+              ...(startDate ? { gte: startDate } : {}),
+              ...(endDate ? { lte: endDate } : {}),
+            },
+          }
+        : {}),
+    };
+
     const [transactions, total] = await Promise.all([
       ctx.db.transaction.findMany({
-        where: {
-          budgetId: { in: budgetIds },
-        },
+        where,
         include: {
           category: true,
           budget: true,
           user: true,
         },
-        orderBy: { date: "desc" },
+        orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * size,
         take: size,
       }),
-      ctx.db.transaction.count({
-        where: {
-          budgetId: { in: budgetIds },
-        },
-      }),
+      ctx.db.transaction.count({ where }),
     ]);
 
     return {
@@ -46,6 +74,7 @@ getUserTransactions: protectedProcedure
       total,
     };
   }),
+
 
   
 
