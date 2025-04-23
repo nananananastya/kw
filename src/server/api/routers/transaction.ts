@@ -75,9 +75,6 @@ getUserTransactions: protectedProcedure
     };
   }),
 
-
-  
-
   // Запрос для получения категорий по бюджету
   getCategoriesByBudget: protectedProcedure
     .input(z.object({ budgetId: z.string() }))
@@ -89,8 +86,8 @@ getUserTransactions: protectedProcedure
       });
     }),
 
-  // Мутация для создания транзакции
-  createTransaction: protectedProcedure
+// Мутация для создания транзакции
+createTransaction: protectedProcedure
   .input(
     z.object({
       amount: z.number(),
@@ -124,7 +121,7 @@ getUserTransactions: protectedProcedure
     }
 
     try {
-      // Создаем транзакцию и обновляем суммы в рамках одной транзакции БД
+      // Создаем транзакцию и обновляем только бюджет
       const createdTransaction = await ctx.db.$transaction(async (prisma) => {
         const transaction = await prisma.transaction.create({
           data: {
@@ -138,6 +135,7 @@ getUserTransactions: protectedProcedure
           },
         });
 
+        // Обновляем только бюджет, без изменения limit категории
         await prisma.budget.update({
           where: { id: budgetId },
           data: {
@@ -145,14 +143,7 @@ getUserTransactions: protectedProcedure
           },
         });
 
-        await prisma.category.update({
-          where: { id: categoryId },
-          data: {
-            limit: category.limit + signedAmount, // допускаем выход за лимит
-          },
-        });
-
-        return { success: true, message: "Транзакция успешно добавлена", transaction }; // Теперь всегда есть message
+        return { success: true, message: "Транзакция успешно добавлена", transaction };
       });
 
       return createdTransaction;
@@ -161,7 +152,6 @@ getUserTransactions: protectedProcedure
       return { success: false, message: "Ошибка при добавлении транзакции" };
     }
   }),
-
   updateTransaction: protectedProcedure
   .input(
     z.object({
@@ -194,44 +184,7 @@ getUserTransactions: protectedProcedure
       },
     });
 
-    // Обновляем лимиты категорий
-    if (input.categoryId !== old.categoryId) {
-      // Вернуть старой категории деньги назад (если был расход)
-      await ctx.db.category.update({
-        where: { id: old.categoryId },
-        data: {
-          limit: {
-            decrement: old.type === "EXPENSE" ? old.amount : 0,
-          },
-        },
-      });
-
-      // Добавить новой категории деньги (если расход)
-      await ctx.db.category.update({
-        where: { id: input.categoryId },
-        data: {
-          limit: {
-            increment: input.type === "EXPENSE" ? input.amount : 0,
-          },
-        },
-      });
-    } else if (input.type !== old.type || input.amount !== old.amount) {
-      // Если категория та же, но изменились сумма или тип — скорректировать лимит
-      const oldDelta = old.type === "EXPENSE" ? old.amount : 0;
-      const newDelta = input.type === "EXPENSE" ? input.amount : 0;
-      const diff = newDelta - oldDelta;
-
-      await ctx.db.category.update({
-        where: { id: input.categoryId },
-        data: {
-          limit: {
-            increment: diff,
-          },
-        },
-      });
-    }
-
-    // Обновляем саму транзакцию
+    // Обновляем транзакцию
     const updatedTransaction = await ctx.db.transaction.update({
       where: { id: input.transactionId },
       data: {
@@ -248,8 +201,6 @@ getUserTransactions: protectedProcedure
       data: updatedTransaction,
     };
   }),
-
-
 
   // Мутация для удаления транзакции
   deleteTransaction: protectedProcedure
@@ -315,9 +266,4 @@ getUserTransactions: protectedProcedure
           }
         }
     }),
-  
-
-
-
-      
 });

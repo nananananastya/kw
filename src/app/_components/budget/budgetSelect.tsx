@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from "~/trpc/react";
 import { InviteUserModal } from './inviteUser';
 import { AddBudgetModal } from './addBudget';
 import { GoPlus, GoPersonAdd, GoTrash } from 'react-icons/go';
 import CategoryList from './categoryList';
 import { AddCategoryModal } from './addCategory';
-import { toast, Toaster } from 'react-hot-toast'; // Импортируем toast и Toaster
+import { toast, Toaster } from 'react-hot-toast';
 import { BudgetSummaryCard } from './budgetSummaryCard';
-
 
 const BudgetSelect: React.FC = () => {
   const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery();
@@ -18,24 +17,45 @@ const BudgetSelect: React.FC = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
 
+  // Создаем ссылку для рефетча категорий
+  const refetchCategories = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    if (groups.length > 0 && !selectedGroupId) {
+      const firstBudget = groups[0];
+      if (firstBudget?.id) {
+        setSelectedGroupId(firstBudget.id);
+      }
+    }
+  }, [groups, selectedGroupId]);
+
   const deleteBudget = api.budget.deleteBudget.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
-        toast.error(data.error); // Ошибка при удалении бюджета
+        toast.error(data.error);
       } else if (data?.message) {
-        toast.success(data.message); // Уведомление об успешном удалении
-        setSelectedGroupId(null); // Сбрасываем выбранный бюджет
-        refetch(); // Перезапрос данных
+        toast.success(data.message);
+        setSelectedGroupId(null);
+        refetch();
       }
     },
   });
 
-  const { mutate: addCategory } = api.budget.addCategoryToBudget.useMutation();
+  // Используем refetch для получения актуальных данных категорий
+  const utils = api.useUtils();
 
-  const handleAddCategory = (name: string, limit: number, budgetId: string) => {
-    addCategory({ name, limit, budgetId }); // Теперь вызываем mutate напрямую
-    setAddCategoryModalOpen(false); // Закрываем модалку после добавления
+  // где-то вверху компонента
+  const { mutateAsync: addCategory } = api.budget.addCategoryToBudget.useMutation({
+    onSuccess: () => {
+      utils.budget.getCategoriesWithExpenses.invalidate(selectedGroupId!); // обновляем список
+    },
+  });
+  
+  const handleAddCategory = async (name: string, limit: number, budgetId: string) => {
+    await addCategory({ name, limit, budgetId });
+    utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
   };
+  
 
   const buttonStyle = 'px-4 py-2 rounded-full font-medium transition-colors duration-200 text-sm md:text-base';
   const activeStyle = 'bg-gradient-to-r from-pink-400 to-purple-500 text-white';
@@ -49,85 +69,88 @@ const BudgetSelect: React.FC = () => {
 
   return (
     <div>
-    {selectedGroupId && <BudgetSummaryCard budgetId={selectedGroupId}/>}
-    <div className="container mx-auto bg-white shadow-lg rounded-xl p-4 w-full transition-all duration-300 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold text-gray-700">Группа бюджета</h2>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
-            title="Создать группу"
-          >
-            <GoPlus className="w-5 h-5 text-gray-700" />
-          </button>
-          <button
-            onClick={() => setIsInviteModalOpen(true)}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
-            title="Пригласить участника"
-          >
-            <GoPersonAdd className="w-5 h-5 text-gray-700" />
-          </button>
-          {selectedGroupId && (
+      <Toaster />
+      {selectedGroupId && <BudgetSummaryCard budgetId={selectedGroupId} />}
+      <div className="container mx-auto bg-white shadow-lg rounded-xl p-4 w-full transition-all duration-300 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-semibold text-gray-700">Группа бюджета</h2>
+          <div className="flex gap-3">
             <button
-              onClick={() => {
-                const isConfirmed = window.confirm("Точно удалить бюджет?");
-                if (isConfirmed && selectedGroupId) {
-                  deleteBudget.mutate({ budgetId: selectedGroupId });
-                }
-              }}
-              className="p-2 rounded-full bg-purple-100 hover:bg-pink-200 transition"
-              title="Удалить бюджет"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+              title="Создать группу"
             >
-              <GoTrash className="w-5 h-5" />
+              <GoPlus className="w-5 h-5 text-gray-700" />
             </button>
-          )}
-
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+              title="Пригласить участника"
+            >
+              <GoPersonAdd className="w-5 h-5 text-gray-700" />
+            </button>
+            {selectedGroupId && (
+              <button
+                onClick={() => {
+                  const isConfirmed = window.confirm("Точно удалить бюджет?");
+                  if (isConfirmed && selectedGroupId) {
+                    deleteBudget.mutate({ budgetId: selectedGroupId });
+                  }
+                }}
+                className="p-2 rounded-full bg-purple-100 hover:bg-pink-200 transition"
+                title="Удалить бюджет"
+              >
+                <GoTrash className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex flex-wrap gap-4">
-        {groups.map((group) => (
-          <button
-            key={group.id}
-            onClick={() => handleGroupChange(group.id)}
-            className={`${buttonStyle} ${selectedGroupId === group.id ? activeStyle : inactiveStyle}`}
-          >
-            {group.name}
-          </button>
-        ))}
-      </div>
 
-      {selectedGroupId && (
-        <CategoryList 
-          budgetId={selectedGroupId} 
-          setAddCategoryModalOpen={setAddCategoryModalOpen}  // передаем пропс
+        <div className="flex flex-wrap gap-4">
+          {groups.map((group) => (
+            <button
+              key={group.id}
+              onClick={() => handleGroupChange(group.id)}
+              className={`${buttonStyle} ${selectedGroupId === group.id ? activeStyle : inactiveStyle}`}
+            >
+              {group.name}
+            </button>
+          ))}
+        </div>
+
+        {selectedGroupId && (
+          <CategoryList
+            budgetId={selectedGroupId}
+            setAddCategoryModalOpen={setAddCategoryModalOpen}
+            refetchCategories={refetchCategories} // Передаем ref
+          />
+        )}
+
+        <InviteUserModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          onInvite={(email) => {
+            console.log('Пригласить:', email);
+            setIsInviteModalOpen(false);
+          }}
+          budgetId={selectedGroupId!}
         />
-      )}
 
-      <InviteUserModal
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-        onInvite={(email) => {
-          console.log('Пригласить:', email);
-          setIsInviteModalOpen(false);
-        }}
-        budgetId={selectedGroupId!} // Здесь передаем выбранный бюджет
-      />
-      <AddBudgetModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onAddGroup={(id, name) => {
-          console.log("Добавлена группа:", id, name);
-          // возможно, invalidate или setState
-        }}
-      />
-      <AddCategoryModal 
-        isOpen={isAddCategoryModalOpen} 
-        onClose={() => setAddCategoryModalOpen(false)} 
-        onAdd={handleAddCategory} 
-        budgetId={selectedGroupId!}
-      />
-    </div>
+        <AddBudgetModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onAddGroup={(id, name) => {
+            console.log("Добавлена группа:", id, name);
+          }}
+        />
+
+        <AddCategoryModal
+          isOpen={isAddCategoryModalOpen}
+          onClose={() => setAddCategoryModalOpen(false)}
+          onAdd={handleAddCategory}
+          budgetId={selectedGroupId!}
+        />
+      </div>
     </div>
   );
 };

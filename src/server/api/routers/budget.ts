@@ -1,6 +1,6 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
+import { startOfMonth } from "date-fns";
 
 export const budgetRouter = createTRPCRouter({
   // Получаем все бюджеты, связанные с пользователем
@@ -86,36 +86,45 @@ export const budgetRouter = createTRPCRouter({
 
    return { message: 'Пользователь успешно добавлен в бюджет' };
  }),
+ deleteBudget: protectedProcedure
+ .input(z.object({ budgetId: z.string() }))
+ .mutation(async ({ ctx, input }) => {
+   const { budgetId } = input;
 
-  // Удаляем выбранный бюджет
-  deleteBudget: protectedProcedure
-    .input(z.object({ budgetId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const { budgetId } = input;
+   // Проверка на наличие бюджета
+   const budget = await ctx.db.budget.findUnique({
+     where: { id: budgetId },
+   });
 
-      // Проверка на наличие бюджета
-      const budget = await ctx.db.budget.findUnique({
-        where: { id: budgetId },
-      });
+   if (!budget) {
+     return { error: "Бюджет не найден" }; // Если бюджет не найден
+   }
 
-      if (!budget) {
-        return { error: "Бюджет не найден" }; // Если бюджет не найден
-      }
+   // Удаляем транзакции, связанные с бюджетом
+   await ctx.db.transaction.deleteMany({
+     where: { budgetId: budgetId },
+   });
 
-      // Удаляем связи с пользователями (если есть)
-      await ctx.db.budgetUser.deleteMany({
-        where: {
-          budgetId: budgetId,
-        },
-      });
+   // Удаляем категории, связанные с бюджетом
+   await ctx.db.category.deleteMany({
+     where: { budgetId: budgetId },
+   });
 
-      // Удаляем сам бюджет
-      await ctx.db.budget.delete({
-        where: { id: budgetId },
-      });
+   // Удаляем связи с пользователями (если есть)
+   await ctx.db.budgetUser.deleteMany({
+     where: {
+       budgetId: budgetId,
+     },
+   });
 
-      return { message: "Бюджет успешно удалён" }; // Сообщение об успешном удалении
-    }),
+   // Удаляем сам бюджет
+   await ctx.db.budget.delete({
+     where: { id: budgetId },
+   });
+
+   return { message: "Бюджет успешно удалён" }; // Сообщение об успешном удалении
+ }),
+
 
   // Получить категории для выбранного бюджета
   getCategoriesForBudget: protectedProcedure
@@ -179,6 +188,40 @@ export const budgetRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       return ctx.db.category.delete({
         where: { id: input.id },
+      });
+    }),
+
+    getCategoriesWithExpenses: protectedProcedure
+    .input(z.string()) // budgetId
+    .query(async ({ ctx, input: budgetId }) => {
+      const startDate = startOfMonth(new Date());
+  
+      // Получаем все категории, независимо от наличия транзакций
+      const categories = await ctx.db.category.findMany({
+        where: { budgetId },
+        include: {
+          transactions: {
+            where: {
+              type: 'EXPENSE',
+              date: {
+                gte: startDate, // только транзакции начиная с начала месяца
+              },
+            },
+          },
+        },
+      });
+  
+      // Маппируем категории и добавляем транзакции, если они есть
+      return categories.map((category) => {
+        // Если транзакции есть, считаем потраченные средства, если нет — ставим 0
+        const spent = category.transactions?.reduce((sum, tx) => sum + tx.amount, 0) || 0;
+        return {
+          id: category.id,
+          name: category.name,
+          limit: category.limit,
+          spent,
+          budgetId: category.budgetId, // добавляем для EditCategoryModal
+        };
       });
     }),
 
