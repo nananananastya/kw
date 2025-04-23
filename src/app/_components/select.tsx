@@ -18,9 +18,9 @@ export const Select = ({ value, onChange, options, id, error, disabled }: Select
                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm`}
                 value={value}
                 onChange={onChange}
-                disabled={disabled} // Добавляем disabled
+                disabled={disabled} 
             >
-                <option value="">Выберите</option> {/* Дефолтное значение */}
+                <option value="" disabled hidden>Выберите</option>
                 {options.map((option, index) => (
                     <option key={index} value={option.value}>{option.label}</option>
                 ))}

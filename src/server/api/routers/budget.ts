@@ -246,4 +246,72 @@ addGoal: protectedProcedure
       });
     }),
   
+    // Получаем баланс, доходы и расходы по бюджету
+getBudgetSummary: protectedProcedure
+.input(z.object({ budgetId: z.string() }))
+.query(async ({ ctx, input }) => {
+  const { budgetId } = input;
+
+  // Получаем все транзакции по бюджету
+  const transactions = await ctx.db.transaction.findMany({
+    where: {
+      budgetId,
+    },
+  });
+
+  const income = transactions
+    .filter((t) => t.type === "INCOME")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const expense = transactions
+    .filter((t) => t.type === "EXPENSE")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const balance = await ctx.db.budget.findUnique({
+    where: { id: budgetId },
+    select: { amount: true },
+  });
+
+  return { balance: balance?.amount ?? 0, income, expense };
+}),
+
+// Пополнение бюджета
+updateBudgetBalance: protectedProcedure
+  .input(z.object({ budgetId: z.string(), amount: z.number().positive() }))
+  .mutation(async ({ ctx, input }) => {
+    const { budgetId, amount } = input;
+
+    // Получаем текущий бюджет
+    const budget = await ctx.db.budget.update({
+      where: { id: budgetId },
+      data: {
+        amount: {
+          increment: amount, // увеличиваем на указанную сумму
+        },
+      },
+    });
+
+    return budget;
+  }),
+
+// Снятие средств с бюджета
+decreaseBudgetBalance: protectedProcedure
+  .input(z.object({ budgetId: z.string(), amount: z.number().positive() }))
+  .mutation(async ({ ctx, input }) => {
+    const { budgetId, amount } = input;
+
+    // Получаем текущий бюджет
+    const budget = await ctx.db.budget.update({
+      where: { id: budgetId },
+      data: {
+        amount: {
+          decrement: amount, // уменьшаем на указанную сумму
+        },
+      },
+    });
+
+    return budget;
+  }),
+
+
 });

@@ -8,6 +8,7 @@ import { GoPlus, GoPersonAdd, GoTrash } from 'react-icons/go';
 import CategoryList from './categoryList';
 import { AddCategoryModal } from './addCategory';
 import { toast, Toaster } from 'react-hot-toast'; // Импортируем toast и Toaster
+import { BudgetSummaryCard } from './budgetSummaryCard';
 
 
 const BudgetSelect: React.FC = () => {
@@ -47,6 +48,8 @@ const BudgetSelect: React.FC = () => {
   if (isLoading) return <div className="text-gray-500">Загрузка групп...</div>;
 
   return (
+    <div>
+    {selectedGroupId && <BudgetSummaryCard budgetId={selectedGroupId}/>}
     <div className="container mx-auto bg-white shadow-lg rounded-xl p-4 w-full transition-all duration-300 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold text-gray-700">Группа бюджета</h2>
@@ -124,6 +127,7 @@ const BudgetSelect: React.FC = () => {
         onAdd={handleAddCategory} 
         budgetId={selectedGroupId!}
       />
+    </div>
     </div>
   );
 };

@@ -1,0 +1,138 @@
+import React, { useState } from "react";
+import ReactCardFlip from "react-card-flip";
+import { api } from '~/trpc/react';
+
+export const BalanceCard = ({
+  balance,
+  expense,
+  isFlipped,
+  setIsFlipped,
+  budgetId
+}: {
+  balance: number;
+  expense: number;
+  isFlipped: boolean;
+  setIsFlipped: (flipped: boolean) => void;
+  budgetId: string;
+}) => {
+  const [amount, setAmount] = useState<string>(''); // Используем строку для корректного ввода
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const updateBalance = api.budget.updateBudgetBalance.useMutation();
+  const decreaseBalance = api.budget.decreaseBudgetBalance.useMutation();
+
+  const utils = api.useUtils();
+
+  const handleSubmit = (type: "add" | "subtract") => {
+    if (isLoading || amount === '') return; // Не выполняем операцию, если сумма не введена
+
+    const parsedAmount = parseFloat(amount); // Преобразуем строку в число
+
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return; // Проверка на корректность суммы
+
+    setIsLoading(true);
+
+    // Обновление баланса
+    if (type === "add") {
+      updateBalance.mutate({ budgetId, amount: parsedAmount }, {
+        onSuccess: () => {
+          setIsFlipped(false);
+          setIsLoading(false);
+          setAmount(''); // Очищаем поле ввода
+          utils.budget.getBudgetSummary.invalidate({ budgetId });
+        },
+        onError: () => {
+          setIsLoading(false);
+          // Добавить обработку ошибок
+        }
+      });
+    } else if (type === "subtract") {
+      decreaseBalance.mutate({ budgetId, amount: parsedAmount }, {
+        onSuccess: () => {
+          setIsFlipped(false);
+          setIsLoading(false);
+          setAmount(''); // Очищаем поле ввода
+          utils.budget.getBudgetSummary.invalidate({ budgetId });
+        },
+        onError: () => {
+          setIsLoading(false);
+          // Добавить обработку ошибок
+        }
+      });
+    }
+  };
+
+  // Функция для предотвращения переворота при клике на поле ввода
+  const handleInputClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Останавливает всплытие события
+  };
+
+  // Функция для контроля ввода, чтобы не было ведущих нулей и пустых строк
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Убираем все символы кроме цифр и точки
+    if (/^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+    }
+  };
+
+  return (
+    <ReactCardFlip isFlipped={isFlipped} flipDirection="horizontal">
+      {/* Front */}
+      <div
+        className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-xl shadow-xl flex flex-col justify-center items-center hover:scale-105 transition-transform transform ease-in-out h-52 font-sans"
+        onClick={() => setIsFlipped(true)}
+      >
+        <h2 className="text-2xl font-bold text-white mb-6">Баланс бюджета</h2>
+        <p className="text-4xl font-semibold text-white">₽{balance.toFixed(2)}</p>
+
+        <div className="w-full h-1 mt-4 bg-white/20 rounded-full">
+          <div
+            className="h-full bg-white rounded-full"
+            style={{
+              width: `${Math.min((expense / balance) * 100, 100)}%`, // защита от выхода за пределы
+            }}
+          />
+        </div>
+
+        <p className="text-sm text-white mt-2">
+          Потрачено: ₽{expense.toFixed(2)}
+        </p>
+      </div>
+
+      {/* Back */}
+      <div
+        className="relative bg-white p-6 rounded-xl shadow-xl flex flex-col justify-center items-center transition-transform  h-52 font-sans overflow-hidden cursor-pointer"
+        onClick={() => setIsFlipped(false)}
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-200 rounded-full opacity-30 translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-200 rounded-full opacity-30 -translate-x-1/2 translate-y-1/2" />
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">Изменить баланс</h2>
+        <input
+          type="text"
+          placeholder="Введите сумму"
+          className="mb-3 p-2 w-full rounded-md border border-gray-300 text-gray-800"
+          value={amount}
+          onChange={handleAmountChange} // Используем новую функцию обработки ввода
+          onClick={handleInputClick} // добавляем обработчик
+        />
+        <div className="flex gap-4">
+          <button
+            className={`px-4 py-2 bg-purple-500 text-white rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={() => handleSubmit("add")}
+            disabled={isLoading}
+          >
+            Пополнить
+          </button>
+          <button
+            className={`px-4 py-2 bg-pink-500 text-white rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={() => handleSubmit("subtract")}
+            disabled={isLoading}
+          >
+            Снять
+          </button>
+        </div>
+      </div>
+    </ReactCardFlip>
+  );
+};

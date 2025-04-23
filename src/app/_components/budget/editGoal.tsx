@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { EditModalWrapper } from './baseEdit';
-import { GoTrash } from "react-icons/go";
+import { DateField } from '../dateField';
 
 interface EditGoalModalProps {
   isOpen: boolean;
@@ -10,9 +10,9 @@ interface EditGoalModalProps {
     name: string;
     targetAmount: number;
     currentAmount: number;
-    targetDate: string;
+    targetDate: Date;
   };
-  onSave: (id: string, name: string, targetAmount: number, targetDate: string) => void;
+  onSave: (id: string, name: string, targetAmount: number, targetDate: Date) => void;
   onDelete: (id: string) => void; // Добавляем функцию для удаления
 }
 
@@ -70,10 +70,13 @@ const EditGoalModal = ({ isOpen, onClose, goal, onSave, onDelete }: EditGoalModa
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Дата достижения</label>
-        <input
-          type="date"
+        <DateField
           value={targetDate}
-          onChange={(e) => setTargetDate(e.target.value)}
+          onChange={(d) => {
+            if (d instanceof Date && !isNaN(d.getTime())) {
+              setTargetDate(d);
+            }
+          }}
           className="w-full p-2 border border-gray-300 rounded"
         />
       </div>

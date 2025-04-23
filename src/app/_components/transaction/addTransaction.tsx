@@ -13,15 +13,22 @@ export const AddTransactionForm = () => {
   const utils = api.useUtils(); // Хук TRPC, даёт доступ к методам query
 
   const createTransaction = api.transaction.createTransaction.useMutation({
-    onSuccess: () => {
-      toast.success('Транзакция успешно добавлена!');
-      resetForm();
-      utils.transaction.getUserTransactions.invalidate(); // ⬅️ обновляем список
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success(data.message); // Используем message для успешного сообщения
+        resetForm();
+        utils.transaction.getUserTransactions.invalidate(); // ⬅️ обновляем список
+      } else {
+        toast.error(data.message); // Используем message для ошибки
+      }
     },
     onError: (error) => {
+      // Здесь показываем ошибку в тостере
       toast.error(`Ошибка при добавлении: ${error.message}`);
     }
   });
+  
+  
 
   const { data: budgets = [], isLoading: loadingBudgets } = api.budget.getUserBudgets.useQuery();
   const [selectedBudgetId, setSelectedBudgetId] = useState<string>("");
@@ -151,6 +158,7 @@ export const AddTransactionForm = () => {
               }
             }}
             className="block h-12 rounded-md border-2 border-gray-300 p-3"
+            maxDate={new Date()}
           />
 
         </div>

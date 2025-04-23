@@ -91,74 +91,233 @@ getUserTransactions: protectedProcedure
 
   // Мутация для создания транзакции
   createTransaction: protectedProcedure
-    .input(
-      z.object({
-        amount: z.number(),
-        description: z.string().optional(),
-        type: z.enum(["INCOME", "EXPENSE"]),
-        categoryId: z.string(),
-        budgetId: z.string(),
-        date: z.string(), // ISO date string
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.transaction.create({
-        data: {
-          amount: input.amount,
-          description: input.description,
-          type: input.type,
-          categoryId: input.categoryId,
-          budgetId: input.budgetId,
-          date: new Date(input.date),
-          userId: ctx.session.user.id,
-        },
-      });
-    }),
+  .input(
+    z.object({
+      amount: z.number(),
+      description: z.string().optional(),
+      type: z.enum(["INCOME", "EXPENSE"]),
+      categoryId: z.string(),
+      budgetId: z.string(),
+      date: z.string(), // ISO date string
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
+    const { amount, type, budgetId, categoryId } = input;
 
-// Мутация для обновления транзакции
-updateTransaction: protectedProcedure
+    // Получаем текущий бюджет и категорию
+    const [budget, category] = await Promise.all([
+      ctx.db.budget.findUnique({ where: { id: budgetId } }),
+      ctx.db.category.findUnique({ where: { id: categoryId } }),
+    ]);
+
+    if (!budget || !category) {
+      return { success: false, message: "Бюджет или категория не найдены" };
+    }
+
+    const signedAmount = type === "EXPENSE" ? -amount : amount;
+
+    // Проверка на выход за рамки бюджета
+    const newBudgetAmount = (budget.amount ?? 0) + signedAmount;
+    if (newBudgetAmount < 0) {
+      return { success: false, message: "Недостаточно средств в бюджете" };
+    }
+
+    try {
+      // Создаем транзакцию и обновляем суммы в рамках одной транзакции БД
+      const createdTransaction = await ctx.db.$transaction(async (prisma) => {
+        const transaction = await prisma.transaction.create({
+          data: {
+            amount,
+            description: input.description,
+            type,
+            categoryId,
+            budgetId,
+            date: new Date(input.date),
+            userId,
+          },
+        });
+
+        await prisma.budget.update({
+          where: { id: budgetId },
+          data: {
+            amount: newBudgetAmount,
+          },
+        });
+
+        await prisma.category.update({
+          where: { id: categoryId },
+          data: {
+            limit: category.limit + signedAmount, // допускаем выход за лимит
+          },
+        });
+
+        return { success: true, message: "Транзакция успешно добавлена", transaction }; // Теперь всегда есть message
+      });
+
+      return createdTransaction;
+
+    } catch (error) {
+      return { success: false, message: "Ошибка при добавлении транзакции" };
+    }
+  }),
+
+  updateTransaction: protectedProcedure
   .input(
     z.object({
       transactionId: z.string(),
       description: z.string().nullable(),
       categoryId: z.string(),
       amount: z.number(),
-      type: z.enum(['INCOME', 'EXPENSE']),
+      type: z.enum(["INCOME", "EXPENSE"]),
+      date: z.date(),
     })
   )
   .mutation(async ({ ctx, input }) => {
-    try {
-      const updatedTransaction = await ctx.db.transaction.update({
-        where: { id: input.transactionId },
+    const old = await ctx.db.transaction.findUnique({
+      where: { id: input.transactionId },
+    });
+
+    if (!old) throw new Error("Старая транзакция не найдена");
+
+    const deltaOld = old.type === "EXPENSE" ? old.amount : -old.amount;
+    const deltaNew = input.type === "EXPENSE" ? -input.amount : input.amount;
+    const totalDiff = deltaNew + deltaOld;
+
+    // Обновляем бюджет
+    await ctx.db.budget.update({
+      where: { id: old.budgetId },
+      data: {
+        amount: {
+          increment: totalDiff,
+        },
+      },
+    });
+
+    // Обновляем лимиты категорий
+    if (input.categoryId !== old.categoryId) {
+      // Вернуть старой категории деньги назад (если был расход)
+      await ctx.db.category.update({
+        where: { id: old.categoryId },
         data: {
-          description: input.description,
-          categoryId: input.categoryId,
-          amount: input.amount,
-          type: input.type,
+          limit: {
+            decrement: old.type === "EXPENSE" ? old.amount : 0,
+          },
         },
       });
-      return { message: "Транзакция обновлена успешно", data: updatedTransaction };
-    } catch (error) {
-      throw new Error("Не удалось обновить транзакцию");
+
+      // Добавить новой категории деньги (если расход)
+      await ctx.db.category.update({
+        where: { id: input.categoryId },
+        data: {
+          limit: {
+            increment: input.type === "EXPENSE" ? input.amount : 0,
+          },
+        },
+      });
+    } else if (input.type !== old.type || input.amount !== old.amount) {
+      // Если категория та же, но изменились сумма или тип — скорректировать лимит
+      const oldDelta = old.type === "EXPENSE" ? old.amount : 0;
+      const newDelta = input.type === "EXPENSE" ? input.amount : 0;
+      const diff = newDelta - oldDelta;
+
+      await ctx.db.category.update({
+        where: { id: input.categoryId },
+        data: {
+          limit: {
+            increment: diff,
+          },
+        },
+      });
     }
+
+    // Обновляем саму транзакцию
+    const updatedTransaction = await ctx.db.transaction.update({
+      where: { id: input.transactionId },
+      data: {
+        description: input.description,
+        categoryId: input.categoryId,
+        amount: input.amount,
+        type: input.type,
+        date: input.date,
+      },
+    });
+
+    return {
+      message: "Транзакция обновлена успешно",
+      data: updatedTransaction,
+    };
   }),
 
 
-    // Мутация для удаления транзакции
-    deleteTransaction: protectedProcedure
-      .input(z.object({ transactionId: z.string() }))
-      .mutation(async ({ ctx, input }) => {
-        try {
-          const deletedTransaction = await ctx.db.transaction.delete({
-            where: {
-              id: input.transactionId,
-            },
-          });
-          return { message: "Транзакция удалена успешно", data: deletedTransaction };
-        } catch (error) {
-          throw new Error("Не удалось удалить транзакцию");
+
+  // Мутация для удаления транзакции
+  deleteTransaction: protectedProcedure
+    .input(z.object({ transactionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Получаем транзакцию, чтобы получить сумму, тип и связанные данные
+        const transaction = await ctx.db.transaction.findUnique({
+          where: { id: input.transactionId },
+          include: {
+            budget: true, // Подключаем связанные с транзакцией данные о бюджете
+            category: true, // Подключаем связанные данные о категории
+          },
+        });
+  
+        if (!transaction) {
+          throw new Error("Транзакция не найдена");
         }
-      }),
+  
+        // Если сумма бюджета может быть null, нужно предусмотреть это в логике
+        const updatedBudgetAmount = transaction.budget.amount ?? 0; // Если null, заменим на 0
+  
+        // Обновляем сумму бюджета в зависимости от типа операции (доход или расход)
+        const updateBudget = {
+          amount: transaction.type === 'INCOME'
+            ? updatedBudgetAmount - transaction.amount
+            : updatedBudgetAmount + transaction.amount,
+        };
+  
+        // Если сумма категории может быть null, то используем аналогичный подход
+        const updatedCategoryAmount = transaction.category.limit ?? 0;
+  
+        // Обновляем сумму категории
+        const updateCategory: Prisma.CategoryUpdateInput = {
+          limit: transaction.type === 'INCOME'
+            ? updatedCategoryAmount - transaction.amount
+            : updatedCategoryAmount + transaction.amount,
+        };
+  
+        // Обновляем бюджет и категорию
+        await ctx.db.budget.update({
+          where: { id: transaction.budget.id },
+          data: updateBudget,
+        });
+  
+        await ctx.db.category.update({
+          where: { id: transaction.category.id },
+          data: updateCategory,
+        });
+  
+        // Удаляем транзакцию
+        const deletedTransaction = await ctx.db.transaction.delete({
+          where: { id: input.transactionId },
+        });
+  
+        return { message: "Транзакция удалена успешно", data: deletedTransaction };
+      } catch (error) {
+          // Приводим error к типу Error, чтобы безопасно использовать message
+          if (error instanceof Error) {
+            throw new Error("Не удалось удалить транзакцию: " + error.message);
+          } else {
+            throw new Error("Неизвестная ошибка при удалении транзакции");
+          }
+        }
+    }),
+  
+
+
 
       
 });

@@ -115,6 +115,23 @@ interface TransactionFiltersProps {
               id="sort-order-filter"
             />
           </div>
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate(null);
+                setEndDate(null);
+                setBudgetFilter('');
+                setCategoryFilter('');
+                setTypeFilter('');
+                setSortBy('date');
+                setSortOrder('desc');
+              }}
+              className="bg-gray-300 text-sm text-gray-700 border border-gray-300 font-medium hover:bg-gray-400 px-4 py-2 rounded transition-all"
+            >
+              Очистить
+            </button>
+          </div>
         </div>
       </div>
     );

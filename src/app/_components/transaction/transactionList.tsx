@@ -74,22 +74,26 @@ export function TransactionList() {
 
   const handleTransactionSave = async (updatedTransaction: typeof selectedTransaction) => {
     if (!updatedTransaction) return;
-
+  
     try {
-      const { id, description, category, amount, type } = updatedTransaction;
+      const { id, description, category, amount, type, date } = updatedTransaction;
+  
       await updateTransaction({
         transactionId: id,
         description,
         categoryId: category?.id || '',
         amount,
         type,
+        date, 
       });
+  
       setSelectedTransaction(null);
       await refetch();
     } catch (error: any) {
       console.error('Ошибка при обновлении транзакции:', error);
     }
   };
+  
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
@@ -106,7 +110,6 @@ export function TransactionList() {
       <h2 className="text-xl font-bold mb-4">Транзакции</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        <div className="bg-white p-6 rounded-xl shadow-md">
           <TransactionFilters
             startDate={startDate}
             setStartDate={setStartDate}
@@ -125,9 +128,8 @@ export function TransactionList() {
             budgetFilter={budgetFilter}
             setBudgetFilter={setBudgetFilter}
           />
-        </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-md md:col-span-2">
+        <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-lg md:col-span-2">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">Список транзакций</h2>
           {isLoading ? (
             <p>Загрузка...</p>
