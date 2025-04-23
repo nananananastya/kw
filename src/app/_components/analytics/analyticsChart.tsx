@@ -1,0 +1,82 @@
+'use client';
+
+import React, { useState } from 'react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import ChartButton from './chartButton'; 
+
+interface AnalyticsChartProps {
+  categoryData: { category: string; value: number }[];
+}
+
+const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ categoryData }) => {
+  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie'); // Стейт для выбора типа графика
+
+  const COLORS = [
+    '#D84C9B', '#9B47B1', '#DA6DFF', '#8E2CB7', '#F06DA6',
+    '#B25BCC', '#F4A6D7', '#BB66D4', '#E8A0FF', '#9A3E9C',
+  ];
+
+  // Обработчик для изменения типа графика
+  const handleChartTypeChange = (type: 'pie' | 'bar') => {
+    setChartType(type);
+  };
+
+  return (
+    <div className="h-80">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-700">Распределение расходов по категориям</h2>
+        {/* Используем общий компонент для обеих кнопок */}
+        <div className="flex gap-4 justify-end">
+          <ChartButton
+            type="pie"
+            isActive={chartType === 'pie'}
+            onClick={() => handleChartTypeChange('pie')}
+            text="Круговая" // Передаем текст
+          />
+          <ChartButton
+            type="bar"
+            isActive={chartType === 'bar'}
+            onClick={() => handleChartTypeChange('bar')}
+            text="Столбчатая" // Передаем текст
+          />
+        </div>
+      </div>
+
+      {/* График */}
+      {chartType === 'pie' ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={categoryData} dataKey="value" nameKey="category" outerRadius={100} label>
+              {categoryData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend layout="horizontal" align="center" verticalAlign="bottom" />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+<ResponsiveContainer width="100%" height="100%">
+  <BarChart data={categoryData}>
+    {/* Определение градиента */}
+    <defs>
+      <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#F06DA6" stopOpacity={1} /> {/* Розовый */}
+        <stop offset="100%" stopColor="#9B47B1" stopOpacity={1} /> {/* Фиолетовый */}
+      </linearGradient>
+    </defs>
+    
+    <XAxis dataKey="category" />
+    <YAxis />
+    <Tooltip />
+    
+    {/* Применение градиента к столбцам */}
+    <Bar dataKey="value" fill="url(#gradient1)" />
+  </BarChart>
+</ResponsiveContainer>
+      )}
+    </div>
+  );
+};
+
+export default AnalyticsChart;
