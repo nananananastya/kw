@@ -6,18 +6,18 @@ import { api } from '~/trpc/react';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (name: string, limit: number, budgetId: string) => void; // добавлен третий аргумент
+  onAdd: (name: string, limit: number, budgetId: string) => void;
   budgetId: string;
 }
 
 export const AddCategoryModal = ({ isOpen, onClose, onAdd, budgetId }: Props) => {
-  const utils = api.useUtils();  // Получаем утилиты для обновления кэшированных данных
+  const utils = api.useUtils(); // утилиты TRPC
 
   const createCategory = api.budget.addCategoryToBudget.useMutation({
     onSuccess: async () => {
-      // После успешного добавления категории обновляем список категорий для конкретного бюджета
-      utils.budget.getCategoriesForBudget.invalidate(budgetId );
-      onClose();  // Закрытие модалки
+      // 👇 Инвалидируем именно getCategoriesWithExpenses
+      await utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+      onClose(); // закрываем модалку
     },
   });
 
