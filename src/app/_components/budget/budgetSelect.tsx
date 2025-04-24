@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from "~/trpc/react";
 import { InviteUserModal } from './inviteUser';
 import { AddBudgetModal } from './addBudget';
@@ -17,6 +17,16 @@ const BudgetSelect: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (groups.length > 0 && !selectedGroupId) {
+      const firstBudget = groups[0]
+      if (firstBudget?.id) {
+        setSelectedGroupId(firstBudget.id);
+      }
+    }
+  }, [groups, selectedGroupId]);
+
 
   const deleteBudget = api.budget.deleteBudget.useMutation({
     onSuccess: (data) => {

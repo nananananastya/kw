@@ -78,51 +78,52 @@ export const analyticsRouter = createTRPCRouter({
     }),
 
     getCategoryAnalyticsByBudget: protectedProcedure
-  .input(
-    z.object({
-      budgetId: z.string(),
-      period: z.string(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    })
-  )
-  .query(async ({ ctx, input }) => {
-    const { budgetId, period, startDate, endDate } = input;
-
-    // Формируем фильтр по дате
-    let dateFilter = {};
-    if (period === 'lastMonth') {
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      dateFilter = { date: { gte: lastMonth } };
-    } else if (period === 'custom' && startDate && endDate) {
-      dateFilter = {
-        date: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+    .input(
+      z.object({
+        budgetId: z.string(),
+        period: z.string(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { budgetId, period, startDate, endDate } = input;
+  
+      // Фильтр по дате
+      let dateFilter = {};
+      if (period === 'lastMonth') {
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        dateFilter = { date: { gte: lastMonth } };
+      } else if (period === 'custom' && startDate && endDate) {
+        dateFilter = {
+          date: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        };
+      }
+  
+      // Получаем все категории с их транзакциями типа EXPENSE
+      const categories = await ctx.db.category.findMany({
+        where: { budgetId },
+        include: {
+          transactions: {
+            where: {
+              ...dateFilter,
+              type: 'EXPENSE',
+            },
+          },
         },
-      };
-    }
-
-    // Получаем все категории по бюджету
-    const categories = await ctx.db.category.findMany({
-      where: {
-        budgetId,
-      },
-      include: {
-        transactions: {
-          where: dateFilter, // Фильтруем только транзакции, не категории
-        },
-      },
-    });
-
-    // Считаем сумму по каждой категории (даже если транзакций нет)
-    return categories.map((category) => ({
-      category: category.name,
-      value: category.transactions.reduce((sum, t) => sum + t.amount, 0),
-    }));
-  }),
-
+      });
+  
+      // Формируем итоговую аналитику по категориям
+      return categories.map((category) => ({
+        category: category.name,
+        value: category.transactions.reduce((sum, t) => sum + t.amount, 0),
+      }));
+    }),
+  
   
   
 

@@ -9,13 +9,15 @@ export async function MyApp({
 const session = await auth();
 
 return (
-    <HydrateClient>
-    <header>
-        { session ? <Navbar session={session} /> : <SigninLink /> }
-    </header>
-    <main>
-        { session ? children : "Not signed in" }
-    </main>
-    </HydrateClient>
-);
+      <div className="bg-gray-100">
+        <HydrateClient>
+          <header>
+            {session ? <Navbar session={session} /> : <SigninLink />}
+          </header>
+          <main className="container mx-auto py-6">
+            {session ? children : <p>Not signed in</p>}
+          </main>
+        </HydrateClient>
+      </div>
+  );
 }
