@@ -202,6 +202,30 @@ createTransaction: protectedProcedure
     };
   }),
 
+  getUserRoleForBudget: protectedProcedure
+  .input(
+    z.object({
+      budgetId: z.string(),
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id; 
+
+    return await ctx.db.budgetUser.findUnique({
+      where: {
+        userId_budgetId: {
+          userId,
+          budgetId: input.budgetId,
+        },
+      },
+      select: {
+        role: true,
+      },
+    });
+  }),
+
+  
+
   // Мутация для удаления транзакции
   deleteTransaction: protectedProcedure
     .input(z.object({ transactionId: z.string() }))

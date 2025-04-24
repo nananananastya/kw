@@ -17,7 +17,6 @@ const BudgetSelect: React.FC = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
 
-  // Создаем ссылку для рефетча категорий
   const refetchCategories = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -41,21 +40,25 @@ const BudgetSelect: React.FC = () => {
     },
   });
 
-  // Используем refetch для получения актуальных данных категорий
   const utils = api.useUtils();
 
-  // где-то вверху компонента
   const { mutateAsync: addCategory } = api.budget.addCategoryToBudget.useMutation({
     onSuccess: () => {
-      utils.budget.getCategoriesWithExpenses.invalidate(selectedGroupId!); // обновляем список
+      if (selectedGroupId) {
+        utils.budget.getCategoriesWithExpenses.invalidate(selectedGroupId);
+      }
     },
   });
-  
+
   const handleAddCategory = async (name: string, limit: number, budgetId: string) => {
+    if (!isOwner) {
+      toast.error("Только владелец бюджета может добавлять категории");
+      return;
+    }
+
     await addCategory({ name, limit, budgetId });
     utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
   };
-  
 
   const buttonStyle = 'px-4 py-2 rounded-full font-medium transition-colors duration-200 text-sm md:text-base';
   const activeStyle = 'bg-gradient-to-r from-pink-400 to-purple-500 text-white';
@@ -64,6 +67,10 @@ const BudgetSelect: React.FC = () => {
   const handleGroupChange = (groupId: string) => {
     setSelectedGroupId(groupId);
   };
+
+  const currentGroup = groups.find((g) => g.id === selectedGroupId);
+  const userRole = currentGroup?.userRole;
+  const isOwner = userRole === 'OWNER';
 
   if (isLoading) return <div className="text-gray-500">Загрузка групп...</div>;
 
@@ -83,7 +90,13 @@ const BudgetSelect: React.FC = () => {
               <GoPlus className="w-5 h-5 text-gray-700" />
             </button>
             <button
-              onClick={() => setIsInviteModalOpen(true)}
+              onClick={() => {
+                if (!isOwner) {
+                  toast.error("Только владелец может приглашать участников");
+                  return;
+                }
+                setIsInviteModalOpen(true);
+              }}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
               title="Пригласить участника"
             >
@@ -92,8 +105,12 @@ const BudgetSelect: React.FC = () => {
             {selectedGroupId && (
               <button
                 onClick={() => {
+                  if (!isOwner) {
+                    toast.error("Удалить бюджет может только владелец");
+                    return;
+                  }
                   const isConfirmed = window.confirm("Точно удалить бюджет?");
-                  if (isConfirmed && selectedGroupId) {
+                  if (isConfirmed) {
                     deleteBudget.mutate({ budgetId: selectedGroupId });
                   }
                 }}
@@ -121,8 +138,15 @@ const BudgetSelect: React.FC = () => {
         {selectedGroupId && (
           <CategoryList
             budgetId={selectedGroupId}
-            setAddCategoryModalOpen={setAddCategoryModalOpen}
-            refetchCategories={refetchCategories} // Передаем ref
+            setAddCategoryModalOpen={() => {
+              if (!isOwner) {
+                toast.error("Добавлять категории может только владелец");
+              } else {
+                setAddCategoryModalOpen(true);
+              }
+            }}
+            refetchCategories={refetchCategories}
+            isOwner={isOwner}
           />
         )}
 

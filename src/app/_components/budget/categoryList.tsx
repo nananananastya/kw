@@ -3,6 +3,7 @@ import { api } from '~/trpc/react';
 import ItemList from './itemList';
 import { GoPlus } from 'react-icons/go';
 import EditCategoryModal from './editCategory';
+import { toast } from 'react-hot-toast';
 
 type CategoryWithSpent = {
   id: string;
@@ -15,23 +16,25 @@ type CategoryListProps = {
   budgetId: string;
   setAddCategoryModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   refetchCategories?: React.MutableRefObject<() => void>;
+  isOwner: boolean; // 👈 добавили это
 };
 
 const CategoryList: React.FC<CategoryListProps> = ({
   budgetId,
   setAddCategoryModalOpen,
   refetchCategories,
+  isOwner,
 }) => {
-  // Используем запрос getCategoriesWithExpenses
   const { data: categories = [], isLoading, error, refetch } = api.budget.getCategoriesWithExpenses.useQuery(budgetId);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<CategoryWithSpent | null>(null);
 
   const utils = api.useUtils();
+
   const updateCategory = api.budget.updateCategory.useMutation({
     onSuccess: () => {
-      utils.budget.getCategoriesWithExpenses.invalidate(budgetId); // Инвалидируем кэш для актуализации данных
+      utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
     },
   });
 
@@ -43,7 +46,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
 
   const deleteCategory = api.budget.deleteCategory.useMutation({
     onSuccess: () => {
-      utils.budget.getCategoriesWithExpenses.invalidate(budgetId); // Инвалидируем кэш после удаления
+      utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
       setIsEditModalOpen(false);
     },
   });
@@ -55,17 +58,26 @@ const CategoryList: React.FC<CategoryListProps> = ({
   }
 
   const handleCategoryClick = (category: CategoryWithSpent) => {
+    if (!isOwner) {
+      toast.error("Редактирование категорий доступно только владельцу бюджета");
+      return;
+    }
+
     setCategoryToEdit(category);
     setIsEditModalOpen(true);
   };
 
   const handleSaveCategory = (id: string, name: string, limit: number) => {
-    console.log("Сохранение изменений для категории:", id, name, limit);
     updateCategory.mutate({ id, name, limit });
     setIsEditModalOpen(false);
   };
 
   const handleDeleteCategory = (id: string) => {
+    if (!isOwner) {
+      toast.error("Удаление категорий доступно только владельцу бюджета");
+      return;
+    }
+
     if (confirm("Точно удалить категорию?")) {
       deleteCategory.mutate({ id });
     }
@@ -80,7 +92,13 @@ const CategoryList: React.FC<CategoryListProps> = ({
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-700 mb-2">Категории бюджета</h2>
             <button
-              onClick={() => setAddCategoryModalOpen(true)}
+              onClick={() => {
+                if (!isOwner) {
+                  toast.error("Добавлять категории может только владелец бюджета");
+                } else {
+                  setAddCategoryModalOpen(true);
+                }
+              }}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
               title="Добавить категорию"
             >
@@ -89,7 +107,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
           </div>
         }
         renderItem={(category) => {
-          const spent = category.spent; // Теперь spent всегда присутствует
+          const spent = category.spent;
           const progress = Math.min((spent / category.limit) * 100, 100);
           const isOverLimit = spent > category.limit;
           const progressColor = 'bg-pink-500';

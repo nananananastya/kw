@@ -5,33 +5,31 @@ import { startOfMonth } from "date-fns";
 export const budgetRouter = createTRPCRouter({
   // Получаем все бюджеты, связанные с пользователем
   getUserBudgets: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.budget.findMany({
+    const userId = ctx.session.user.id;
+  
+    const budgets = await ctx.db.budget.findMany({
       where: {
         users: {
           some: {
-            userId: ctx.session.user.id,
+            userId,
           },
         },
       },
-    });
-  }),
-
-  // Создаём новый бюджет и добавляем текущего пользователя в него
-  createBudget: protectedProcedure
-    .input(z.object({ name: z.string(), amount: z.number().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.budget.create({
-        data: {
-          name: input.name,
-          amount: input.amount ?? 0, // если не передано — будет 0
-          users: {
-            create: {
-              userId: ctx.session.user.id,
-            },
-          },
+      include: {
+        users: {
+          where: { userId },
+          select: { role: true },
         },
-      });
-    }),
+      },
+    });
+  
+    // Возвращаем данные с ролью пользователя в каждом бюджете
+    return budgets.map((budget) => ({
+      ...budget,
+      userRole: budget.users[0]?.role ?? null,
+    }));
+  }),
+  
 
   // Создаём новый бюджет, добавляем в него текущего пользователя
   create: protectedProcedure
@@ -48,6 +46,7 @@ export const budgetRouter = createTRPCRouter({
         data: {
           userId: ctx.session.user.id,
           budgetId: budget.id,
+          role: 'OWNER',
         },
       });
 
@@ -81,6 +80,7 @@ export const budgetRouter = createTRPCRouter({
      data: {
        userId: user.id,
        budgetId,
+       role: 'MEMBER',
      },
    });
 

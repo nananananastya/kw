@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useCallback } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -8,6 +10,7 @@ interface DateFieldProps {
   error?: string;
   className?: string;
   maxDate?: Date; 
+  disabled?: boolean; 
 }
 
 export const DateField = ({
@@ -15,7 +18,8 @@ export const DateField = ({
   onChange,
   error,
   className = '',
-  maxDate, 
+  maxDate,
+  disabled = false,  
 }: DateFieldProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(value);
 
@@ -33,7 +37,8 @@ export const DateField = ({
         onChange={handleChange}
         dateFormat="yyyy-MM-dd"
         className={className}
-        maxDate={maxDate} // <- передаём в DatePicker
+        maxDate={maxDate}
+        disabled={disabled}  
       />
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>

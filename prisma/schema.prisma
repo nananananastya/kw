@@ -82,6 +82,7 @@ model BudgetUser {
     budget    Budget @relation(fields: [budgetId], references: [id])
     budgetId  String
 
+    role      Role 
 
     @@id([userId, budgetId])
 }
@@ -126,4 +127,9 @@ model Transaction {
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+enum Role {
+  OWNER
+  MEMBER
 }
