@@ -38,10 +38,8 @@ const EditCategoryModal = ({
       title="Редактировать категорию"
       onSubmit={handleSubmit}
       onDelete={() => {
-        if (confirm("Вы уверены, что хотите удалить эту категорию?")) {
           onDelete?.(category.id);
           onClose(); // Закрываем модальное окно после удаления
-        }
       }}
     >
       <div className="mb-4">

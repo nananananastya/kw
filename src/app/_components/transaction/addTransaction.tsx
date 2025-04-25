@@ -9,21 +9,25 @@ import { TransactionType } from "@prisma/client";
 import { Button } from "../button";
 import { toast } from 'react-hot-toast';
 
+const transactionTypeLabels: Record<TransactionType, string> = {
+  INCOME: "Доход",
+  EXPENSE: "Расход",
+};
+
 export const AddTransactionForm = () => {
-  const utils = api.useUtils(); // Хук TRPC, даёт доступ к методам query
+  const utils = api.useUtils(); 
 
   const createTransaction = api.transaction.createTransaction.useMutation({
     onSuccess: (data) => {
       if (data.success) {
-        toast.success(data.message); // Используем message для успешного сообщения
+        toast.success(data.message); 
         resetForm();
-        utils.transaction.getUserTransactions.invalidate(); // ⬅️ обновляем список
+        utils.transaction.getUserTransactions.invalidate();
       } else {
-        toast.error(data.message); // Используем message для ошибки
+        toast.error(data.message); 
       }
     },
     onError: (error) => {
-      // Здесь показываем ошибку в тостере
       toast.error(`Ошибка при добавлении: ${error.message}`);
     }
   });
@@ -44,7 +48,7 @@ export const AddTransactionForm = () => {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<TransactionType | "">("");
   const [categoryId, setCategoryId] = useState("");
-  const [date, setDate] = useState<Date | null>(null);  // Используем Date вместо строки
+  const [date, setDate] = useState<Date | null>(null); 
 
   const resetForm = () => {
     setAmount("");
@@ -69,7 +73,7 @@ export const AddTransactionForm = () => {
       type: type as TransactionType,
       categoryId,
       budgetId: selectedBudgetId,
-      date: date.toISOString(),  // Отправляем в формате ISO
+      date: date.toISOString(), 
     });
   };
 
@@ -77,26 +81,23 @@ export const AddTransactionForm = () => {
     <div className="container mx-auto bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold text-gray-700 mb-4">Новая финансовая запись</h2>
       <form className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">Краткое описание</label>
-          <Input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Например, кофе на завтрак"
-          />
+      <div>
+          <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-2">К какому бюджету относится?</label>
+          {loadingBudgets ? (
+            <div>Загрузка бюджета...</div>
+          ) : (
+            <Select
+              value={selectedBudgetId}
+              onChange={(e) => setSelectedBudgetId(e.target.value)}
+              options={budgets.map((b) => ({
+                label: b.name,
+                value: b.id,
+              }))}
+              id="budget"
+              disabled={loadingBudgets}
+            />
+          )}
         </div>
-
-        <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">Сколько потрачено/заработано?</label>
-          <Input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="₽0.00"
-          />
-        </div>
-
         <div>
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">Выберите категорию</label>
           {loadingCategories ? (
@@ -114,36 +115,35 @@ export const AddTransactionForm = () => {
             />
           )}
         </div>
-
         <div>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">Тип операции</label>
           <Select
             value={type}
             onChange={(e) => setType(e.target.value as TransactionType)}
             options={Object.values(TransactionType).map((value) => ({
-              label: value,
+              label: transactionTypeLabels[value],
               value,
             }))}
             id="type"
           />
         </div>
-
         <div>
-          <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-2">К какому бюджету относится?</label>
-          {loadingBudgets ? (
-            <div>Загрузка бюджета...</div>
-          ) : (
-            <Select
-              value={selectedBudgetId}
-              onChange={(e) => setSelectedBudgetId(e.target.value)}
-              options={budgets.map((b) => ({
-                label: b.name,
-                value: b.id,
-              }))}
-              id="budget"
-              disabled={loadingBudgets}
-            />
-          )}
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">Краткое описание</label>
+          <Input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Например, кофе на завтрак"
+          />
+        </div>
+        <div>
+          <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">Сколько потрачено/заработано?</label>
+          <Input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="₽0.00"
+          />
         </div>
 
         <div>
@@ -152,7 +152,7 @@ export const AddTransactionForm = () => {
             value={date}
             onChange={(d) => {
               if (d instanceof Date && !isNaN(d.getTime())) {
-                setDate(d); // Присваиваем объект Date, а не строку
+                setDate(d); 
               } else {
                 setDate(null);
               }
