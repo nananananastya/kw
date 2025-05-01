@@ -53,13 +53,18 @@ const BudgetSelect: React.FC = () => {
   });
 
   const handleAddCategory = async (name: string, limit: number, budgetId: string) => {
-    if (!isOwner) {
-      toast.error("Только владелец бюджета может добавлять категории");
-      return;
-    }
 
     await addCategory({ name, limit, budgetId });
     utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+  };
+
+  // Вспомогательная функция для проверки роли и выполнения действия
+  const handleOwnerAction = (isOwner: boolean, action: () => void, errorMessage: string) => {
+    if (!isOwner) {
+      toast.error(errorMessage);
+      return;
+    }
+    action();
   };
 
   const buttonStyle = 'px-4 py-2 rounded-full font-medium transition-colors duration-200 text-sm md:text-base';
@@ -92,13 +97,7 @@ const BudgetSelect: React.FC = () => {
               <GoPlus className="w-5 h-5 text-gray-700" />
             </button>
             <button
-              onClick={() => {
-                if (!isOwner) {
-                  toast.error("Только владелец может приглашать участников");
-                  return;
-                }
-                setIsInviteModalOpen(true);
-              }}
+              onClick={() => handleOwnerAction(isOwner, () => setIsInviteModalOpen(true), "Только владелец может приглашать участников")}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
               title="Пригласить участника"
             >
@@ -115,16 +114,12 @@ const BudgetSelect: React.FC = () => {
             )}
             {selectedGroupId && (
               <button
-                onClick={() => {
-                  if (!isOwner) {
-                    toast.error("Удалить бюджет может только владелец");
-                    return;
-                  }
+                onClick={() => handleOwnerAction(isOwner, () => {
                   const isConfirmed = window.confirm("Точно удалить бюджет?");
                   if (isConfirmed) {
                     deleteBudget.mutate({ budgetId: selectedGroupId });
                   }
-                }}
+                }, "Удалить бюджет может только владелец")}
                 className="p-2 rounded-full bg-purple-100 hover:bg-pink-200 transition"
                 title="Удалить бюджет"
               >
@@ -149,13 +144,7 @@ const BudgetSelect: React.FC = () => {
         {selectedGroupId && (
           <CategoryList
             budgetId={selectedGroupId}
-            setAddCategoryModalOpen={() => {
-              if (!isOwner) {
-                toast.error("Добавлять категории может только владелец");
-              } else {
-                setAddCategoryModalOpen(true);
-              }
-            }}
+            setAddCategoryModalOpen={() => handleOwnerAction(isOwner, () => setAddCategoryModalOpen(true), "Добавлять категории может только владелец")}
             refetchCategories={refetchCategories}
             isOwner={isOwner}
           />

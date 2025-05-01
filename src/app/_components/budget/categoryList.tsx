@@ -33,8 +33,13 @@ const CategoryList: React.FC<CategoryListProps> = ({
   const utils = api.useUtils();
 
   const updateCategory = api.budget.updateCategory.useMutation({
-    onSuccess: () => {
-      utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+    onSuccess: (data) => {
+      if (data?.error) {
+        toast.error(data.error);
+      } else if (data?.message) {
+        toast.success(data.message);
+        utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+      }
     },
   });
 
@@ -45,11 +50,25 @@ const CategoryList: React.FC<CategoryListProps> = ({
   }, [refetch, refetchCategories]);
 
   const deleteCategory = api.budget.deleteCategory.useMutation({
-    onSuccess: () => {
-      utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
-      setIsEditModalOpen(false);
+    onSuccess: (data) => {
+      if (data?.error) {
+        toast.error(data.error);
+      } else if (data?.message) {
+        toast.success(data.message);
+        utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+        setIsEditModalOpen(false);
+      }
     },
   });
+
+  // Вспомогательная функция для проверки роли и выполнения действия
+  const handleOwnerAction = (isOwner: boolean, action: () => void, errorMessage: string) => {
+    if (!isOwner) {
+      toast.error(errorMessage);
+      return;
+    }
+    action();
+  };
 
   if (isLoading) return <div>Загрузка категорий...</div>;
   if (error) {
@@ -58,13 +77,14 @@ const CategoryList: React.FC<CategoryListProps> = ({
   }
 
   const handleCategoryClick = (category: CategoryWithSpent) => {
-    if (!isOwner) {
-      toast.error("Редактирование категорий доступно только владельцу бюджета");
-      return;
-    }
-
-    setCategoryToEdit(category);
-    setIsEditModalOpen(true);
+    handleOwnerAction(
+      isOwner,
+      () => {
+        setCategoryToEdit(category);
+        setIsEditModalOpen(true);
+      },
+      "Редактирование категорий доступно только владельцу бюджета"
+    );
   };
 
   const handleSaveCategory = (id: string, name: string, limit: number) => {
@@ -73,14 +93,15 @@ const CategoryList: React.FC<CategoryListProps> = ({
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (!isOwner) {
-      toast.error("Удаление категорий доступно только владельцу бюджета");
-      return;
-    }
-
-    if (confirm("Точно удалить категорию?")) {
-      deleteCategory.mutate({ id });
-    }
+    handleOwnerAction(
+      isOwner,
+      () => {
+        if (confirm("Точно удалить категорию?")) {
+          deleteCategory.mutate({ id });
+        }
+      },
+      "Удаление категорий доступно только владельцу бюджета"
+    );
   };
 
   return (
@@ -93,11 +114,11 @@ const CategoryList: React.FC<CategoryListProps> = ({
             <h2 className="text-xl font-semibold text-gray-700 mb-2">Категории бюджета</h2>
             <button
               onClick={() => {
-                if (!isOwner) {
-                  toast.error("Добавлять категории может только владелец бюджета");
-                } else {
-                  setAddCategoryModalOpen(true);
-                }
+                handleOwnerAction(
+                  isOwner,
+                  () => setAddCategoryModalOpen(true),
+                  "Добавлять категории может только владелец бюджета"
+                );
               }}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
               title="Добавить категорию"

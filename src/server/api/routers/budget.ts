@@ -1,6 +1,7 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 import { startOfMonth } from "date-fns";
+import { requireBudgetOwner } from '~/server/utils/checkRole';
 
 export const budgetRouter = createTRPCRouter({
   // Получаем все бюджеты, связанные с пользователем
@@ -59,71 +60,70 @@ export const budgetRouter = createTRPCRouter({
  .mutation(async ({ ctx, input }) => {
    const { email, budgetId } = input;
 
-   if (!budgetId) {
-     return { error: 'Бюджет не выбран' };
+   try {
+     await requireBudgetOwner({
+       db: ctx.db,
+       userId: ctx.session.user.id,
+       budgetId,
+     });
+   } catch (err) {
+     return { error: (err as Error).message };
    }
 
    const user = await ctx.db.user.findUnique({ where: { email } });
    if (!user) {
-     return { error: 'Пользователь с таким email не найден' };
+     return { error: "Пользователь с таким email не найден" };
    }
 
-   const existingBudgetUser = await ctx.db.budgetUser.findFirst({
+   const existing = await ctx.db.budgetUser.findFirst({
      where: { userId: user.id, budgetId },
    });
 
-   if (existingBudgetUser) {
-     return { error: 'Пользователь уже добавлен в этот бюджет' };
+   if (existing) {
+     return { error: "Пользователь уже добавлен в этот бюджет" };
    }
 
    await ctx.db.budgetUser.create({
      data: {
        userId: user.id,
        budgetId,
-       role: 'MEMBER',
+       role: "MEMBER",
      },
    });
 
-   return { message: 'Пользователь успешно добавлен в бюджет' };
+   return { message: "Пользователь успешно добавлен в бюджет" };
  }),
+
  
  deleteBudget: protectedProcedure
  .input(z.object({ budgetId: z.string() }))
  .mutation(async ({ ctx, input }) => {
    const { budgetId } = input;
 
-   // Проверка на наличие бюджета
    const budget = await ctx.db.budget.findUnique({
      where: { id: budgetId },
    });
 
    if (!budget) {
-     return { error: "Бюджет не найден" }; // Если бюджет не найден
+     return { error: "Бюджет не найден" };
    }
 
-   // Удаляем транзакции, связанные с бюджетом
-   await ctx.db.transaction.deleteMany({
-     where: { budgetId: budgetId },
-   });
+   try {
+     await requireBudgetOwner({
+       db: ctx.db,
+       userId: ctx.session.user.id,
+       budgetId,
+     });
+   } catch (err) {
+     return { error: (err as Error).message };
+   }
 
-   // Удаляем категории, связанные с бюджетом
-   await ctx.db.category.deleteMany({
-     where: { budgetId: budgetId },
-   });
+   await ctx.db.transaction.deleteMany({ where: { budgetId } });
+   await ctx.db.category.deleteMany({ where: { budgetId } });
+   await ctx.db.budgetUser.deleteMany({ where: { budgetId } });
+   await ctx.db.budget.delete({ where: { id: budgetId } });
 
-   // Удаляем связи с пользователями (если есть)
-   await ctx.db.budgetUser.deleteMany({
-     where: {
-       budgetId: budgetId,
-     },
-   });
-
-   // Удаляем сам бюджет
-   await ctx.db.budget.delete({
-     where: { id: budgetId },
-   });
-
-   return { message: "Бюджет успешно удалён" }; // Сообщение об успешном удалении
+   return { message: "Бюджет успешно удалён" };
  }),
 
 
@@ -143,6 +143,7 @@ export const budgetRouter = createTRPCRouter({
       return categories; // Возвращаем найденные категории
     }),
 
+    // Добавление новой категории в бюджет
     addCategoryToBudget: protectedProcedure
     .input(
       z.object({
@@ -154,7 +155,12 @@ export const budgetRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { name, limit, budgetId } = input;
   
-      // Логика для добавления категории
+      await requireBudgetOwner({
+        db: ctx.db,
+        userId: ctx.session.user.id,
+        budgetId,
+      });
+  
       const category = await ctx.db.category.create({
         data: {
           name,
@@ -163,10 +169,11 @@ export const budgetRouter = createTRPCRouter({
         },
       });
   
-      return category; // Возвращаем созданную категорию
+      return category;
     }),
 
-      updateCategory: protectedProcedure
+    // редактирование категории
+    updateCategory: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -175,22 +182,66 @@ export const budgetRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.category.update({
+      try {
+        const category = await ctx.db.category.findUnique({
+          where: { id: input.id },
+          select: { budgetId: true },
+        });
+  
+        if (!category) {
+          return { error: "Категория не найдена" };
+        }
+  
+        await requireBudgetOwner({
+          db: ctx.db,
+          userId: ctx.session.user.id,
+          budgetId: category.budgetId,
+        });
+  
+        await ctx.db.category.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            limit: input.limit,
+          },
+        });
+  
+        return { message: "Категория обновлена" };
+      } catch (err) {
+        return { error: (err as Error).message };
+      }
+    }),  
+  
+  // удаление категории
+  deleteCategory: protectedProcedure
+  .input(z.object({ id: z.string() }))
+  .mutation(async ({ ctx, input }) => {
+    try {
+      const category = await ctx.db.category.findUnique({
         where: { id: input.id },
-        data: {
-          name: input.name,
-          limit: input.limit,
-        },
+        select: { budgetId: true },
       });
-    }),
 
-      deleteCategory: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.category.delete({
+      if (!category) {
+        return { error: "Категория не найдена" };
+      }
+
+      await requireBudgetOwner({
+        db: ctx.db,
+        userId: ctx.session.user.id,
+        budgetId: category.budgetId,
+      });
+
+      await ctx.db.category.delete({
         where: { id: input.id },
       });
-    }),
+
+      return { message: "Категория успешно удалёна" };
+    } catch (err) {
+      return { error: (err as Error).message };
+    }
+  }),
+
 
     getCategoriesWithExpenses: protectedProcedure
     .input(z.string()) // budgetId
@@ -315,7 +366,7 @@ addAmountToGoal: protectedProcedure
   }),
 
   
-    // Получаем баланс, доходы и расходы по бюджету
+// Получаем баланс, доходы и расходы по бюджету
 getBudgetSummary: protectedProcedure
 .input(z.object({ budgetId: z.string() }))
 .query(async ({ ctx, input }) => {
@@ -394,6 +445,14 @@ decreaseBudgetBalance: protectedProcedure
   removeUserFromBudget: protectedProcedure
   .input(z.object({ budgetId: z.string(), userId: z.string() }))
   .mutation(async ({ input, ctx }) => {
+    // Проверка, что текущий пользователь - владелец бюджета
+    await requireBudgetOwner({
+      db: ctx.db,
+      userId: ctx.session.user.id, // Берем ID текущего пользователя из сессии
+      budgetId: input.budgetId,
+    });
+
+    // Если проверка прошла успешно, удаляем пользователя из бюджета
     return await ctx.db.budgetUser.deleteMany({
       where: {
         budgetId: input.budgetId,
@@ -401,4 +460,5 @@ decreaseBudgetBalance: protectedProcedure
       },
     });
   }),
+
 });
