@@ -32,7 +32,7 @@ export const EditModalWrapper = ({
           {onDelete && !disableDelete && ( // если onDelete есть и delete не отключен
             <button
               onClick={onDelete}
-              className="absolute right-12 text-red-500 hover:text-red-700"
+              className="absolute right-12 text-pink-500 hover:text-red-700"
               title="Удалить"
             >
               <GoTrash size={24} />

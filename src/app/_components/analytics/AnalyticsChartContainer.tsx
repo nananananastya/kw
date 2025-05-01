@@ -79,8 +79,7 @@ const AnalyticsChartContainer: React.FC = () => {
               />
             </div>
 
-            <div className="w-full mr-2"> {/* Селектор периода тоже с маленьким отступом справа */}
-              {/* Селектор периода */}
+            <div className="w-full mr-2">
               <label htmlFor="period" className="text-white text-l mb-2 block">Период</label>
               <select
                 value={period}

@@ -86,6 +86,7 @@ export const budgetRouter = createTRPCRouter({
 
    return { message: 'Пользователь успешно добавлен в бюджет' };
  }),
+ 
  deleteBudget: protectedProcedure
  .input(z.object({ budgetId: z.string() }))
  .mutation(async ({ ctx, input }) => {
@@ -288,6 +289,31 @@ addGoal: protectedProcedure
         where: { id: input.id },
       });
     }),
+
+// Добавление денег в цель пользователя
+addAmountToGoal: protectedProcedure
+  .input(
+    z.object({
+      goalId: z.string(),  // Идентификатор цели
+      amountToAdd: z.number().min(0),  // Сумма для добавления
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { goalId, amountToAdd } = input;
+
+    // Обновляем цель, добавляя деньги к текущей сумме
+    const updatedGoal = await ctx.db.goal.update({
+      where: { id: goalId },  // Находим цель по ID
+      data: {
+        currentAmount: {
+          increment: amountToAdd,  // Увеличиваем текущую сумму
+        },
+      },
+    });
+
+    return updatedGoal;  // Возвращаем обновленную цель
+  }),
+
   
     // Получаем баланс, доходы и расходы по бюджету
 getBudgetSummary: protectedProcedure
@@ -356,5 +382,23 @@ decreaseBudgetBalance: protectedProcedure
     return budget;
   }),
 
+  getBudgetMembers: protectedProcedure
+  .input(z.object({ budgetId: z.string() }))
+  .query(async ({ input, ctx }) => {
+    return await ctx.db.budgetUser.findMany({
+      where: { budgetId: input.budgetId },
+      include: { user: true },
+    });
+  }),
 
+  removeUserFromBudget: protectedProcedure
+  .input(z.object({ budgetId: z.string(), userId: z.string() }))
+  .mutation(async ({ input, ctx }) => {
+    return await ctx.db.budgetUser.deleteMany({
+      where: {
+        budgetId: input.budgetId,
+        userId: input.userId,
+      },
+    });
+  }),
 });

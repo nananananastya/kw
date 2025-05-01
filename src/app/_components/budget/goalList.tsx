@@ -2,40 +2,36 @@
 
 import React, { useState } from 'react';
 import { GoPlus } from 'react-icons/go';
-import { api } from '~/trpc/react';  // Путь к вашему API
-import ItemList from './itemList';  // Путь к вашему компоненту ItemList
-import EditGoalModal from './editGoal';  // Путь к компоненту модалки редактирования цели
-import { AddGoalModal } from './addGoal';  // Путь к вашему компоненту AddGoalModal
+import { TbPigMoney } from "react-icons/tb";
+import { api } from '~/trpc/react';
+import ItemList from './itemList';
+import EditGoalModal from './editGoal';
+import { AddGoalModal } from './addGoal';
+import AddMoneyToGoalModal from './addMoneyGoal';
 
 const FinancialGoalsList = () => {
-  const { data: financialGoals = [], isLoading, error } = api.budget.getUserGoals.useQuery();  // Получаем данные целей из API
+  const { data: financialGoals = [], isLoading, error } = api.budget.getUserGoals.useQuery();
   
-  const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);  // Состояние для открытия модалки добавления цели
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);  // Состояние для открытия модалки редактирования цели
-  const [goalToEdit, setGoalToEdit] = useState(null);  // Данные цели для редактирования
+  const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [goalToEdit, setGoalToEdit] = useState<any>(null); // Данные цели для редактирования
+  const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState<string | null>(null);  // Состояние для модалки добавления денег
 
   const utils = api.useUtils();
 
   const deleteGoal = api.budget.deleteGoal.useMutation({
     onSuccess: () => {
-      utils.budget.getUserGoals.invalidate();  // Обновляем список целей
-      setIsEditModalOpen(false);  // Закрываем модалку редактирования
+      utils.budget.getUserGoals.invalidate();
+      setIsEditModalOpen(false);  // Закрытие модалки
     },
   });
 
-  // Мутация для добавления новой цели
   const addGoal = api.budget.addGoal.useMutation({
     onSuccess: () => {
-      utils.budget.getUserGoals.invalidate();  // Обновляем список целей
-      setIsAddGoalModalOpen(false);  // Закрываем модалку добавления цели
+      utils.budget.getUserGoals.invalidate();
+      setIsAddGoalModalOpen(false);
     },
   });
-
-  if (isLoading) return <div>Загрузка целей...</div>;
-  if (error) {
-    console.error("Ошибка при загрузке целей:", error);
-    return <div>Ошибка при загрузке целей. Попробуйте позже.</div>;
-  }
 
   const handleGoalClick = (goal: any) => {
     setGoalToEdit(goal);  // Устанавливаем цель для редактирования
@@ -43,26 +39,35 @@ const FinancialGoalsList = () => {
   };
 
   const handleSaveGoal = (id: string, name: string) => {
-    // Логика для сохранения измененной цели
-    console.log("Сохранение изменений для цели:", id, name);
-    setIsEditModalOpen(false);  // Закрытие модалки
+    console.log('Сохранение изменений для цели:', id, name);
+    setIsEditModalOpen(false);
   };
 
   const handleDeleteGoal = (id: string) => {
-      deleteGoal.mutate({ id });
+    deleteGoal.mutate({ id });
   };
 
   const handleAddGoal = (goalData: Record<string, string | number | Date | undefined>) => {
-    // Преобразуем данные в нужный формат
     const formattedGoalData = {
-      name: String(goalData.name || ''),  // Преобразуем в строку
-      targetAmount: Number(goalData.targetAmount),  // Преобразуем targetAmount в число
-      targetDate: goalData.targetDate ? new Date(goalData.targetDate) : new Date(),  // Если targetDate не задан, установим текущее время
-      currentAmount: 0,  // Начальная сумма
+      name: String(goalData.name || ''), 
+      targetAmount: Number(goalData.targetAmount),
+      targetDate: goalData.targetDate ? new Date(goalData.targetDate) : new Date(),
+      currentAmount: 0,
     };
-  
-    // Отправляем данные в мутацию
+
     addGoal.mutate(formattedGoalData);
+  };
+
+  if (isLoading) return <div>Загрузка целей...</div>;
+  if (error) return <div>Ошибка при загрузке целей. Попробуйте позже.</div>;
+
+  const handleAddGoalModalToggle = () => {
+    setIsAddGoalModalOpen(true);
+  };
+
+  const handleAddMoneyClick = (goalId: string, e: React.MouseEvent) => {
+    e.stopPropagation();  // Останавливаем всплытие события, чтобы не открылось редактирование
+    setIsAddMoneyModalOpen(goalId);  // Открытие модалки для конкретной цели
   };
 
   return (
@@ -74,7 +79,7 @@ const FinancialGoalsList = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-700 mb-2">Финансовые цели</h2>
             <button
-              onClick={() => setIsAddGoalModalOpen(true)}  // Открытие модалки для добавления цели
+              onClick={handleAddGoalModalToggle}  
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
               title="Добавить цель"
             >
@@ -85,39 +90,57 @@ const FinancialGoalsList = () => {
         renderItem={(goal) => (
           <div
             className="flex items-center justify-between py-2 border-b border-gray-200 cursor-pointer"
-            onClick={() => handleGoalClick(goal)}
+            onClick={() => handleGoalClick(goal)}  // Открытие модалки редактирования
           >
-            <div>
+            <div className="flex flex-col">
               <p className="text-gray-700">{goal.name}</p>
-              <p className="text-sm text-gray-500">Прогресс: 70%</p>
+              <div className="flex items-center text-sm text-gray-500">
+                <span>Накоплено</span>
+                <span className="mx-1">{goal.currentAmount}</span>
+                <span>из</span>
+                <span className="mx-1">{goal.targetAmount}</span>
+              </div>
             </div>
-            <div className="w-24 h-4 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-purple-500"
-                style={{
-                  width: `70%`,  // Прогресс (можно заменить на динамический)
-                }}
-              />
+            <div className="flex justify-end items-center w-full space-x-4">
+              <div className="w-24 h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-500"
+                  style={{
+                    width: `${(goal.currentAmount / goal.targetAmount) * 100}%`,
+                  }}
+                />
+              </div>
+              <button
+                onClick={(e) => handleAddMoneyClick(goal.id, e)}  // Останавливаем всплытие события
+                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                title="Накопить"
+              >
+                <TbPigMoney className="w-5 h-5 text-gray-700" />
+              </button>
             </div>
           </div>
         )}
       />
-
-      {/* Модальное окно для добавления цели */}
       <AddGoalModal
         isOpen={isAddGoalModalOpen}
         onClose={() => setIsAddGoalModalOpen(false)}
-        onAddGoal={handleAddGoal}  // Обработчик добавления новой цели
+        onAddGoal={handleAddGoal}
       />
-
-      {/* Модальное окно для редактирования цели */}
       {goalToEdit && (
         <EditGoalModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           goal={goalToEdit}
           onSave={handleSaveGoal}
-          onDelete={handleDeleteGoal}  // Возможность удалить цель
+          onDelete={handleDeleteGoal}
+        />
+      )}
+
+      {isAddMoneyModalOpen && (
+        <AddMoneyToGoalModal
+          goalId={isAddMoneyModalOpen}
+          isOpen={true}
+          onClose={() => setIsAddMoneyModalOpen(null)}  // Закрытие модалки
         />
       )}
     </div>

@@ -18,10 +18,15 @@ export const InviteUserModal = ({
   onInvite,
   budgetId,
 }: InviteUserModalProps) => {
+  const { refetch } = api.budget.getBudgetMembers.useQuery(
+    { budgetId },
+    { enabled: !!budgetId } 
+  );
+
   const inviteUser = api.budget.inviteToBudget.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
-        toast.error(data.error); // показываем ошибку, если есть
+        toast.error(data.error); 
         return;
       }
   
@@ -30,9 +35,9 @@ export const InviteUserModal = ({
         onInvite(data.message);
         onClose();
       }
+      refetch();  
     },
     onError: (error) => {
-      // теоретически сюда не попадём, но пусть будет
       const errorMessage =
         error instanceof TRPCClientError
           ? error.message || 'Ошибка при добавлении пользователя'
@@ -59,10 +64,10 @@ export const InviteUserModal = ({
         const email = values.email?.trim();
         if (email) {
           if (!budgetId) {
-            toast.error('Бюджет не выбран'); // Показываем ошибку, если не выбран бюджет
+            toast.error('Бюджет не выбран'); 
             return;
           }
-          inviteUser.mutate({ email, budgetId }); // Вызываем мутацию для добавления пользователя
+          inviteUser.mutate({ email, budgetId }); 
         } else {
           toast.error('Введите email пользователя');
         }

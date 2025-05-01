@@ -1,10 +1,10 @@
 import React from 'react';
 
 interface ChartButtonProps {
-  type: 'pie' | 'bar'; // Тип кнопки (для круговой или столбчатой)
-  isActive: boolean; // Состояние активности кнопки
-  onClick: () => void; // Функция для обработки клика
-  text: string; // Текст, который будет отображаться внутри кнопки
+  type: 'pie' | 'bar'; 
+  isActive: boolean; 
+  onClick: () => void; 
+  text: string; 
 }
 
 const ChartButton: React.FC<ChartButtonProps> = ({ type, isActive, onClick, text }) => {

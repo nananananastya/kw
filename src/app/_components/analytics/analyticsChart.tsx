@@ -42,7 +42,6 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ categoryData }) => {
         </div>
       </div>
 
-      {/* График */}
       {chartType === 'pie' ? (
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -58,11 +57,10 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ categoryData }) => {
       ) : (
 <ResponsiveContainer width="100%" height="100%">
   <BarChart data={categoryData}>
-    {/* Определение градиента */}
     <defs>
       <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#F06DA6" stopOpacity={1} /> {/* Розовый */}
-        <stop offset="100%" stopColor="#9B47B1" stopOpacity={1} /> {/* Фиолетовый */}
+        <stop offset="0%" stopColor="#F06DA6" stopOpacity={1} /> 
+        <stop offset="100%" stopColor="#9B47B1" stopOpacity={1} /> 
       </linearGradient>
     </defs>
     
@@ -70,7 +68,6 @@ const AnalyticsChart: React.FC<AnalyticsChartProps> = ({ categoryData }) => {
     <YAxis />
     <Tooltip />
     
-    {/* Применение градиента к столбцам */}
     <Bar dataKey="value" fill="url(#gradient1)" />
   </BarChart>
 </ResponsiveContainer>

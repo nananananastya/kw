@@ -4,11 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from "~/trpc/react";
 import { InviteUserModal } from './inviteUser';
 import { AddBudgetModal } from './addBudget';
-import { GoPlus, GoPersonAdd, GoTrash } from 'react-icons/go';
+import { GoPlus, GoPersonAdd, GoTrash, GoPeople } from 'react-icons/go';
 import CategoryList from './categoryList';
 import { AddCategoryModal } from './addCategory';
 import { toast, Toaster } from 'react-hot-toast';
 import { BudgetSummaryCard } from './budgetSummaryCard';
+import { BudgetMembersModal } from './budgetMembersModal';
 
 const BudgetSelect: React.FC = () => {
   const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery();
@@ -16,6 +17,7 @@ const BudgetSelect: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
 
   const refetchCategories = useRef<() => void>(() => {});
 
@@ -104,6 +106,15 @@ const BudgetSelect: React.FC = () => {
             </button>
             {selectedGroupId && (
               <button
+                onClick={() => setIsMembersModalOpen(true)}
+                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                title="Участники бюджета"
+              >
+                <GoPeople className="w-5 h-5 text-gray-700" />
+              </button>
+            )}
+            {selectedGroupId && (
+              <button
                 onClick={() => {
                   if (!isOwner) {
                     toast.error("Удалить бюджет может только владелец");
@@ -154,7 +165,6 @@ const BudgetSelect: React.FC = () => {
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
           onInvite={(email) => {
-            console.log('Пригласить:', email);
             setIsInviteModalOpen(false);
           }}
           budgetId={selectedGroupId!}
@@ -173,6 +183,12 @@ const BudgetSelect: React.FC = () => {
           onClose={() => setAddCategoryModalOpen(false)}
           onAdd={handleAddCategory}
           budgetId={selectedGroupId!}
+        />
+        <BudgetMembersModal
+          isOpen={isMembersModalOpen}
+          onClose={() => setIsMembersModalOpen(false)}
+          budgetId={selectedGroupId!}
+          isOwner={isOwner}
         />
       </div>
     </div>
