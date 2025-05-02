@@ -345,24 +345,23 @@ addGoal: protectedProcedure
 addAmountToGoal: protectedProcedure
   .input(
     z.object({
-      goalId: z.string(),  // Идентификатор цели
-      amountToAdd: z.number().min(0),  // Сумма для добавления
+      goalId: z.string(),  
+      amountToAdd: z.number().min(0), 
     })
   )
   .mutation(async ({ ctx, input }) => {
     const { goalId, amountToAdd } = input;
 
-    // Обновляем цель, добавляя деньги к текущей сумме
     const updatedGoal = await ctx.db.goal.update({
-      where: { id: goalId },  // Находим цель по ID
+      where: { id: goalId },  
       data: {
         currentAmount: {
-          increment: amountToAdd,  // Увеличиваем текущую сумму
+          increment: amountToAdd, 
         },
       },
     });
 
-    return updatedGoal;  // Возвращаем обновленную цель
+    return updatedGoal;
   }),
 
   

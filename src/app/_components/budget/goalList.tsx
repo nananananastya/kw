@@ -140,7 +140,7 @@ const FinancialGoalsList = () => {
         <AddMoneyToGoalModal
           goalId={isAddMoneyModalOpen}
           isOpen={true}
-          onClose={() => setIsAddMoneyModalOpen(null)}  // Закрытие модалки
+          onClose={() => setIsAddMoneyModalOpen(null)}
         />
       )}
     </div>

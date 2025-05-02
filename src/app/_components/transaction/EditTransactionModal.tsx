@@ -6,6 +6,7 @@ import { DateField } from '../dateField';
 import { Input } from '../input';
 import { Select } from '../select';
 import { api } from '~/trpc/react';
+import { toast } from 'react-hot-toast';
 
 type TransactionFormData = {
   id: string;
@@ -61,7 +62,7 @@ export default function EditTransactionModal({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
     const date = formData.date instanceof Date && !isNaN(formData.date.getTime())
@@ -74,17 +75,59 @@ export default function EditTransactionModal({
       category: categories?.find((c) => c.id === selectedCategoryId) ?? null,
     };
   
-    onSave(updated); // ⬅️ эта функция вызывает мутацию
-  };
-  
-  
-  
-
-  const handleDelete = () => {
-    if (confirm("Вы уверены, что хотите удалить эту транзакцию?")) {
-      deleteMutation.mutate({ transactionId: transaction.id });
+    try {
+      await onSave(updated);
+    } catch (error) {
+      // Обрабатываем ошибку, если она возникает
+      if (error instanceof Error) {
+        if (error.message === "У вас нет прав на изменение этой транзакции") {
+          toast.error(error.message);
+        } else {
+          toast.error('Неизвестная ошибка при обновлении транзакции');
+        }
+      }
     }
   };
+  
+
+  const handleDelete = async () => {
+    // Проверяем права на удаление перед запросом на подтверждение
+    const { success, message } = await deleteMutation.mutateAsync({ transactionId: transaction.id });
+  
+    if (!success) {
+      // Если прав нет, сразу выводим уведомление и не продолжаем
+      toast.error(message || "У вас нет прав на удаление этой транзакции");
+      return; // Прерываем выполнение функции
+    }
+  
+    // Если прав достаточно, показываем вопрос подтверждения
+    if (confirm("Вы уверены, что хотите удалить эту транзакцию?")) {
+      deleteMutation.mutate(
+        { transactionId: transaction.id },
+        {
+          onSuccess: (data) => {
+            if (data.success) {
+              toast.success("Транзакция успешно удалена");
+              utils.invalidate(); // Перезагружаем данные после удаления
+              onClose(); // Закрываем модальное окно
+            } else {
+              toast.error(data.message || "Не удалось удалить транзакцию");
+            }
+          },
+          onError: (error) => {
+            toast.error(
+              error instanceof Error
+                ? `Ошибка при удалении транзакции: ${error.message}`
+                : "Неизвестная ошибка"
+            );
+          },
+        }
+      );
+    }
+  };
+  
+  
+  
 
   return (
     <EditModalWrapper

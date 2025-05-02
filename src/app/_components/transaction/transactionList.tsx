@@ -8,6 +8,7 @@ import EditTransactionModal from './EditTransactionModal';
 import { TransactionItem } from './item';
 import { TransactionFilters } from './transactionFilters';
 import Pagination from '~/app/ui/pagination';
+import { toast } from 'react-hot-toast'; 
 
 export function TransactionList() {
   const searchParams = useSearchParams();
@@ -71,29 +72,30 @@ export function TransactionList() {
   };
 
   const { mutateAsync: updateTransaction } = api.transaction.updateTransaction.useMutation();
-
+  
   const handleTransactionSave = async (updatedTransaction: typeof selectedTransaction) => {
     if (!updatedTransaction) return;
   
-    try {
-      const { id, description, category, amount, type, date } = updatedTransaction;
+    const { id, description, category, amount, type, date } = updatedTransaction;
   
-      await updateTransaction({
-        transactionId: id,
-        description,
-        categoryId: category?.id || '',
-        amount,
-        type,
-        date, 
-      });
+    const result = await updateTransaction({
+      transactionId: id,
+      description,
+      categoryId: category?.id || '',
+      amount,
+      type,
+      date,
+    });
   
-      setSelectedTransaction(null);
-      await refetch();
-    } catch (error: any) {
-      console.error('Ошибка при обновлении транзакции:', error);
+    if (!result.success) {
+      toast.error(result.message || 'Не удалось обновить транзакцию');
+      return;
     }
-  };
   
+    toast.success(result.message || 'Транзакция успешно обновлена');
+    setSelectedTransaction(null);
+    await refetch();
+  };
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
