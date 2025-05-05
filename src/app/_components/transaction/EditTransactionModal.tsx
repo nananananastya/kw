@@ -67,18 +67,18 @@ export default function EditTransactionModal({
   
     const date = formData.date instanceof Date && !isNaN(formData.date.getTime())
       ? formData.date
-      : new Date(); // если вдруг невалидная дата — берём текущую
+      : new Date(); 
   
     const updated = {
       ...formData,
-      date, // ← гарантировано не undefined
+      date,
       category: categories?.find((c) => c.id === selectedCategoryId) ?? null,
     };
   
     try {
       await onSave(updated);
     } catch (error) {
-      // Обрабатываем ошибку, если она возникает
+
       if (error instanceof Error) {
         if (error.message === "У вас нет прав на изменение этой транзакции") {
           toast.error(error.message);
@@ -91,16 +91,14 @@ export default function EditTransactionModal({
   
 
   const handleDelete = async () => {
-    // Проверяем права на удаление перед запросом на подтверждение
+
     const { success, message } = await deleteMutation.mutateAsync({ transactionId: transaction.id });
   
     if (!success) {
-      // Если прав нет, сразу выводим уведомление и не продолжаем
       toast.error(message || "У вас нет прав на удаление этой транзакции");
-      return; // Прерываем выполнение функции
+      return; 
     }
   
-    // Если прав достаточно, показываем вопрос подтверждения
     if (confirm("Вы уверены, что хотите удалить эту транзакцию?")) {
       deleteMutation.mutate(
         { transactionId: transaction.id },
@@ -108,8 +106,8 @@ export default function EditTransactionModal({
           onSuccess: (data) => {
             if (data.success) {
               toast.success("Транзакция успешно удалена");
-              utils.invalidate(); // Перезагружаем данные после удаления
-              onClose(); // Закрываем модальное окно
+              utils.invalidate(); 
+              onClose(); 
             } else {
               toast.error(data.message || "Не удалось удалить транзакцию");
             }
@@ -126,9 +124,6 @@ export default function EditTransactionModal({
     }
   };
   
-  
-  
-
   return (
     <EditModalWrapper
       isOpen={true}
@@ -213,7 +208,7 @@ export default function EditTransactionModal({
               if (date && !isNaN(date.getTime())) {
                 handleChange('date', date);
               } else {
-                handleChange('date', new Date()); // ← на всякий случай
+                handleChange('date', new Date()); 
               }
             }}
             className="w-full border p-2 rounded"

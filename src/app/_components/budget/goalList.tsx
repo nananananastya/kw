@@ -14,15 +14,15 @@ const FinancialGoalsList = () => {
   
   const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [goalToEdit, setGoalToEdit] = useState<any>(null); // Данные цели для редактирования
-  const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState<string | null>(null);  // Состояние для модалки добавления денег
+  const [goalToEdit, setGoalToEdit] = useState<any>(null); 
+  const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState<string | null>(null);  
 
   const utils = api.useUtils();
 
   const deleteGoal = api.budget.deleteGoal.useMutation({
     onSuccess: () => {
       utils.budget.getUserGoals.invalidate();
-      setIsEditModalOpen(false);  // Закрытие модалки
+      setIsEditModalOpen(false); 
     },
   });
 
@@ -34,8 +34,8 @@ const FinancialGoalsList = () => {
   });
 
   const handleGoalClick = (goal: any) => {
-    setGoalToEdit(goal);  // Устанавливаем цель для редактирования
-    setIsEditModalOpen(true);  // Открываем модалку редактирования
+    setGoalToEdit(goal);  
+    setIsEditModalOpen(true);  
   };
 
   const handleSaveGoal = (id: string, name: string) => {
@@ -66,8 +66,8 @@ const FinancialGoalsList = () => {
   };
 
   const handleAddMoneyClick = (goalId: string, e: React.MouseEvent) => {
-    e.stopPropagation();  // Останавливаем всплытие события, чтобы не открылось редактирование
-    setIsAddMoneyModalOpen(goalId);  // Открытие модалки для конкретной цели
+    e.stopPropagation();  
+    setIsAddMoneyModalOpen(goalId);  
   };
 
   return (
@@ -90,7 +90,7 @@ const FinancialGoalsList = () => {
         renderItem={(goal) => (
           <div
             className="flex items-center justify-between py-2 border-b border-gray-200 cursor-pointer"
-            onClick={() => handleGoalClick(goal)}  // Открытие модалки редактирования
+            onClick={() => handleGoalClick(goal)} 
           >
             <div className="flex flex-col">
               <p className="text-gray-700">{goal.name}</p>
@@ -111,7 +111,7 @@ const FinancialGoalsList = () => {
                 />
               </div>
               <button
-                onClick={(e) => handleAddMoneyClick(goal.id, e)}  // Останавливаем всплытие события
+                onClick={(e) => handleAddMoneyClick(goal.id, e)} 
                 className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
                 title="Накопить"
               >

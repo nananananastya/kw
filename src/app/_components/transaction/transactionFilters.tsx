@@ -15,7 +15,7 @@ interface TransactionFiltersProps {
     sortOrder: 'asc' | 'desc';
     setSortOrder: React.Dispatch<React.SetStateAction<'asc' | 'desc'>>;
     categories: Category[];
-    budgets: any[]; // Типизация для бюджетов
+    budgets: any[]; 
     budgetFilter: string;
     setBudgetFilter: (budget: string) => void;
   }

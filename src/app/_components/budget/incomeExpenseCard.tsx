@@ -15,7 +15,6 @@ export const IncomeExpenseCard = ({
     const expensePercentage = (expense / total) * 100;
     return (
       <ReactCardFlip isFlipped={isFlipped} flipDirection="horizontal">
-        {/* Front */}
         <div
           className="bg-gradient-to-r from-pink-500 to-purple-500 p-6 rounded-xl shadow-xl flex flex-col justify-center items-center hover:scale-105 transition-transform transform cursor-pointer ease-in-out h-52 font-sans"
           onClick={() => setIsFlipped(true)}

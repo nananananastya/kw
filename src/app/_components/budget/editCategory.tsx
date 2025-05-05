@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { EditModalWrapper } from "./baseEdit"; // Подключаем новый EditModalWrapper
+import { EditModalWrapper } from "./baseEdit"; 
 import { Category } from "@prisma/client";
 
 interface EditCategoryModalProps {
@@ -28,7 +28,7 @@ const EditCategoryModal = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(category.id, name, limit);
-    onClose(); // Закрываем модальное окно после сохранения
+    onClose(); 
   };
 
   return (
@@ -39,7 +39,7 @@ const EditCategoryModal = ({
       onSubmit={handleSubmit}
       onDelete={() => {
           onDelete?.(category.id);
-          onClose(); // Закрываем модальное окно после удаления
+          onClose(); 
       }}
     >
       <div className="mb-4">

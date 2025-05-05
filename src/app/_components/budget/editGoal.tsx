@@ -38,7 +38,7 @@ const EditGoalModal = ({ isOpen, onClose, goal, onSave, onDelete }: EditGoalModa
   const handleDelete = () => {
     if (confirm("Вы уверены, что хотите удалить эту цель?")) {
       onDelete(goal.id);
-      onClose(); // Закрываем модалку после удаления
+      onClose(); 
     }
   };
 
@@ -48,7 +48,7 @@ const EditGoalModal = ({ isOpen, onClose, goal, onSave, onDelete }: EditGoalModa
       onClose={onClose} 
       title="Редактировать цель" 
       onSubmit={handleSubmit} 
-      onDelete={handleDelete} // Передаем функцию удаления в компонент
+      onDelete={handleDelete} 
     >
       <div className="mb-4">
         <label className="container mx-auto block text-sm font-medium text-gray-700">Название цели</label>

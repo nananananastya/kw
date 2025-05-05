@@ -16,7 +16,7 @@ type CategoryListProps = {
   budgetId: string;
   setAddCategoryModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   refetchCategories?: React.MutableRefObject<() => void>;
-  isOwner: boolean; // 👈 добавили это
+  isOwner: boolean; 
 };
 
 const CategoryList: React.FC<CategoryListProps> = ({
@@ -61,7 +61,6 @@ const CategoryList: React.FC<CategoryListProps> = ({
     },
   });
 
-  // Вспомогательная функция для проверки роли и выполнения действия
   const handleOwnerAction = (isOwner: boolean, action: () => void, errorMessage: string) => {
     if (!isOwner) {
       toast.error(errorMessage);

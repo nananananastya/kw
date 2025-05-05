@@ -16,7 +16,7 @@ export const AddBudgetModal = ({
   const utils = api.useUtils();
   const createBudget = api.budget.create.useMutation({
     onSuccess: async () => {
-      await utils.budget.getUserBudgets.invalidate(); // обновляем список
+      await utils.budget.getUserBudgets.invalidate();
       onClose();
     },
   });

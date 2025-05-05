@@ -15,9 +15,8 @@ export const AddCategoryModal = ({ isOpen, onClose, onAdd, budgetId }: Props) =>
 
   const createCategory = api.budget.addCategoryToBudget.useMutation({
     onSuccess: async () => {
-      // 👇 Инвалидируем именно getCategoriesWithExpenses
       await utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
-      onClose(); // закрываем модалку
+      onClose(); 
     },
   });
 

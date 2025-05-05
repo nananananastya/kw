@@ -15,7 +15,7 @@ interface AddMoneyToGoalModalProps {
 
 const AddMoneyToGoalModal: React.FC<AddMoneyToGoalModalProps> = ({ goalId, isOpen, onClose }) => {
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
-  const [amount, setAmount] = useState<string>(''); // Пустая строка по умолчанию
+  const [amount, setAmount] = useState<string>(''); 
   const { data: userBudgets = [], isLoading } = api.budget.getUserBudgets.useQuery();
   const decreaseBudgetMutation = api.budget.decreaseBudgetBalance.useMutation();
   const utils = api.useUtils();
@@ -25,7 +25,7 @@ const AddMoneyToGoalModal: React.FC<AddMoneyToGoalModalProps> = ({ goalId, isOpe
       toast.success('Деньги успешно добавлены в цель');
       utils.budget.getUserGoals.invalidate();
       if (selectedBudgetId) {
-        utils.budget.getBudgetSummary.invalidate({ budgetId: selectedBudgetId }); // обновляем баланс
+        utils.budget.getBudgetSummary.invalidate({ budgetId: selectedBudgetId }); 
       }
       utils.budget.getUserBudgets.invalidate();
       onClose();

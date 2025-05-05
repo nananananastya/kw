@@ -1,11 +1,10 @@
-// src/components/Select.tsx
 interface SelectProps {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-    options: { label: string; value: string }[]; // Массив объектов с полями label и value
+    options: { label: string; value: string }[]; 
     id: string;
-    error?: string; // Сообщение об ошибке (если есть)
-    disabled?: boolean; // Добавляем пропс disabled
+    error?: string; 
+    disabled?: boolean; 
 }
 
 export const Select = ({ value, onChange, options, id, error, disabled }: SelectProps) => {
