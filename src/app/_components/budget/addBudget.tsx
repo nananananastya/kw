@@ -2,6 +2,7 @@
 
 import { AddEntityModal } from './baseAdd';
 import { api } from '~/trpc/react';
+import React from 'react'; 
 
 export interface AddBudgetModalProps {
   isOpen: boolean;

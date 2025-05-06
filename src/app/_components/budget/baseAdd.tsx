@@ -4,7 +4,8 @@ import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from 'react';
 import { Button } from '../button';
 import { Input } from '../input';
-import { GoX } from 'react-icons/go'; // Импортируем иконку крестика
+import { GoX } from 'react-icons/go'; 
+import React from 'react'; 
 
 interface AddEntityModalProps {
   isOpen: boolean;

@@ -1,5 +1,6 @@
 import { Button } from "../button";
 import { GoX, GoTrash } from "react-icons/go"; // Импортируем иконки крестика и корзины
+import React from 'react';
 
 interface EditModalWrapperProps {
   isOpen: boolean;

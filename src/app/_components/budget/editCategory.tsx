@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { EditModalWrapper } from "./baseEdit"; 
 import { Category } from "@prisma/client";
+import React from 'react';
 
 interface EditCategoryModalProps {
   isOpen: boolean;
