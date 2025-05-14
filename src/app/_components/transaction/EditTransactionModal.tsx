@@ -9,7 +9,7 @@ import { api } from '~/trpc/react';
 import { toast } from 'react-hot-toast';
 import React from 'react';
 
-type TransactionFormData = {
+interface TransactionFormData {
   id: string;
   date: Date;
   description: string;
@@ -20,11 +20,7 @@ type TransactionFormData = {
   budget: { id: string; name: string } | null;
 };
 
-export default function EditTransactionModal({
-  transaction,
-  onClose,
-  onSave,
-}: {
+export default function EditTransactionModal({ transaction, onClose, onSave } : {
   transaction: TransactionFormData;
   onClose: () => void;
   onSave: (updatedTransaction: TransactionFormData) => void;
@@ -43,10 +39,9 @@ export default function EditTransactionModal({
     },
   });
 
-  const { data: categories } = api.budget.getCategoriesForBudget.useQuery(
-    transaction.budget?.id || ''
-  );
-  
+const { data: categories } = api.category.getCategoriesByBudget.useQuery({
+  budgetId: transaction.budget?.id || '',
+});
 
   useEffect(() => {
     setFormData(transaction);
@@ -88,8 +83,7 @@ export default function EditTransactionModal({
         }
       }
     }
-  };
-  
+  }; 
 
   const handleDelete = async () => {
 
@@ -215,9 +209,6 @@ export default function EditTransactionModal({
             className="w-full border p-2 rounded"
             maxDate={new Date()}
           />
-
-
-
         </div>
       </div>
     </EditModalWrapper>

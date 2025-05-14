@@ -5,13 +5,13 @@ import { api } from "~/trpc/react";
 import { InviteUserModal } from './inviteUser';
 import { AddBudgetModal } from './addBudget';
 import { GoPlus, GoPersonAdd, GoTrash, GoPeople } from 'react-icons/go';
-import CategoryList from './categoryList';
+import { CategoryList } from './categoryList';
 import { AddCategoryModal } from './addCategory';
 import { toast, Toaster } from 'react-hot-toast';
 import { BudgetSummaryCard } from './budgetSummaryCard';
 import { BudgetMembersModal } from './budgetMembersModal';
 
-const BudgetSelect: React.FC = () => {
+export default function BudgetSelect() {
   const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -44,10 +44,10 @@ const BudgetSelect: React.FC = () => {
 
   const utils = api.useUtils();
 
-  const { mutateAsync: addCategory } = api.budget.addCategoryToBudget.useMutation({
+  const { mutateAsync: addCategory } = api.category.addCategoryToBudget.useMutation({
     onSuccess: () => {
       if (selectedGroupId) {
-        utils.budget.getCategoriesWithExpenses.invalidate(selectedGroupId);
+        utils.category.getCategoriesWithExpenses.invalidate(selectedGroupId);
       }
     },
   });
@@ -55,10 +55,9 @@ const BudgetSelect: React.FC = () => {
   const handleAddCategory = async (name: string, limit: number, budgetId: string) => {
 
     await addCategory({ name, limit, budgetId });
-    utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+    utils.category.getCategoriesWithExpenses.invalidate(budgetId);
   };
 
-  // Вспомогательная функция для проверки роли и выполнения действия
   const handleOwnerAction = (isOwner: boolean, action: () => void, errorMessage: string) => {
     if (!isOwner) {
       toast.error(errorMessage);
@@ -183,5 +182,3 @@ const BudgetSelect: React.FC = () => {
     </div>
   );
 };
-
-export default BudgetSelect;

@@ -2,13 +2,19 @@
 
 import { AddEntityModal } from './baseAdd'; 
 
+type GoalFormData = {
+  name: string;
+  targetAmount: number;
+  targetDate?: Date;
+};
+
 interface AddGoalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddGoal: (values: Record<string, string | number | Date | undefined>) => void;
+  onAddGoal: (values: GoalFormData) => void;
 }
 
-export const AddGoalModal = ({ isOpen, onClose, onAddGoal }: AddGoalModalProps) => {
+export function AddGoalModal ({ isOpen, onClose, onAddGoal }: AddGoalModalProps) {
   const fields = [
     {
       name: 'name',
@@ -29,14 +35,14 @@ export const AddGoalModal = ({ isOpen, onClose, onAddGoal }: AddGoalModalProps) 
     },
   ];
 
-  const handleSubmit = (values: Record<string, string | number | Date | undefined>) => {
+  const handleSubmit = (values: Partial<GoalFormData>) => {
     const goalData = {
-      name: values.name || '',  // Если name отсутствует, заменяем на пустую строку
-      targetAmount: Number(values.targetAmount),  // Преобразуем targetAmount в число
-      targetDate: values.targetDate ? new Date(values.targetDate) : undefined,  // Проверяем targetDate
+      name: values.name || '',  
+      targetAmount: Number(values.targetAmount),  
+      targetDate: values.targetDate ? new Date(values.targetDate) : undefined,  
     };
 
-    onAddGoal(goalData);  // Передаем данные в родительский компонент
+    onAddGoal(goalData);  
   };
 
   return (

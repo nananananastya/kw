@@ -9,7 +9,7 @@ interface SelectProps {
     disabled?: boolean; 
 }
 
-export const Select = ({ value, onChange, options, id, error, disabled }: SelectProps) => {
+export function Select ({ value, onChange, options, id, error, disabled }: SelectProps) {
     return (
         <div className="relative">
             <select

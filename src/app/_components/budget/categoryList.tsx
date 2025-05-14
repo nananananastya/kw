@@ -5,40 +5,33 @@ import { GoPlus } from 'react-icons/go';
 import EditCategoryModal from './editCategory';
 import { toast } from 'react-hot-toast';
 
-type CategoryWithSpent = {
-  id: string;
-  name: string;
-  limit: number;
-  spent: number;
-};
-
-type CategoryListProps = {
+interface CategoryListProps {
   budgetId: string;
-  setAddCategoryModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  refetchCategories?: React.MutableRefObject<() => void>;
-  isOwner: boolean; 
-};
+  setAddCategoryModalOpen: (open: boolean) => void;
+  refetchCategories?: { current: () => void };
+  isOwner: boolean;
+}
 
-const CategoryList: React.FC<CategoryListProps> = ({
-  budgetId,
-  setAddCategoryModalOpen,
-  refetchCategories,
-  isOwner,
-}) => {
-  const { data: categories = [], isLoading, error, refetch } = api.budget.getCategoriesWithExpenses.useQuery(budgetId);
 
+export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategories, isOwner }: CategoryListProps) {
+  const { data: categories = [], isLoading, error, refetch } = api.category.getCategoriesWithExpenses.useQuery(budgetId);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [categoryToEdit, setCategoryToEdit] = useState<CategoryWithSpent | null>(null);
+  const [categoryToEdit, setCategoryToEdit] = useState<{
+    id: string;
+    name: string;
+    limit: number;
+    spent: number;
+  } | null>(null);
 
   const utils = api.useUtils();
 
-  const updateCategory = api.budget.updateCategory.useMutation({
+  const updateCategory = api.category.updateCategory.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
         toast.error(data.error);
       } else if (data?.message) {
         toast.success(data.message);
-        utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+        utils.category.getCategoriesWithExpenses.invalidate(budgetId);
       }
     },
   });
@@ -49,13 +42,13 @@ const CategoryList: React.FC<CategoryListProps> = ({
     }
   }, [refetch, refetchCategories]);
 
-  const deleteCategory = api.budget.deleteCategory.useMutation({
+  const deleteCategory = api.category.deleteCategory.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
         toast.error(data.error);
       } else if (data?.message) {
         toast.success(data.message);
-        utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+        utils.category.getCategoriesWithExpenses.invalidate(budgetId);
         setIsEditModalOpen(false);
       }
     },
@@ -75,7 +68,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
     return <div>Ошибка при загрузке категорий. Попробуйте позже.</div>;
   }
 
-  const handleCategoryClick = (category: CategoryWithSpent) => {
+  const handleCategoryClick = (category: { id: string; name: string; limit: number; spent: number }) => {
     handleOwnerAction(
       isOwner,
       () => {
@@ -105,7 +98,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
 
   return (
     <div className="mt-6">
-      <ItemList<CategoryWithSpent>
+      <ItemList
         items={categories}
         keyExtractor={(category) => category.id}
         title={
@@ -169,6 +162,4 @@ const CategoryList: React.FC<CategoryListProps> = ({
       )}
     </div>
   );
-};
-
-export default CategoryList;
+}

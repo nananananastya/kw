@@ -14,14 +14,7 @@ interface DateFieldProps {
   disabled?: boolean; 
 }
 
-export const DateField = ({
-  value,
-  onChange,
-  error,
-  className = '',
-  maxDate,
-  disabled = false,  
-}: DateFieldProps) => {
+export const DateField = ({ value, onChange, error, className = '', maxDate, disabled = false }: DateFieldProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(value);
 
   const handleChange = useCallback((date: Date | null) => {

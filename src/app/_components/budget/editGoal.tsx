@@ -13,10 +13,10 @@ interface EditGoalModalProps {
     targetDate: Date;
   };
   onSave: (id: string, name: string, targetAmount: number, targetDate: Date) => void;
-  onDelete: (id: string) => void; // Добавляем функцию для удаления
+  onDelete: (id: string) => void;
 }
 
-const EditGoalModal = ({ isOpen, onClose, goal, onSave, onDelete }: EditGoalModalProps) => {
+export default function EditGoalModal ({ isOpen, onClose, goal, onSave, onDelete }: EditGoalModalProps) {
   const [name, setName] = useState(goal.name);
   const [targetAmount, setTargetAmount] = useState(goal.targetAmount);
   const [targetDate, setTargetDate] = useState(goal.targetDate);
@@ -83,5 +83,3 @@ const EditGoalModal = ({ isOpen, onClose, goal, onSave, onDelete }: EditGoalModa
     </EditModalWrapper>
   );
 };
-
-export default EditGoalModal;

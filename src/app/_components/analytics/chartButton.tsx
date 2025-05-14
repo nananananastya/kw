@@ -1,13 +1,13 @@
 import React from 'react';
 
 interface ChartButtonProps {
-  type: 'pie' | 'bar'; 
-  isActive: boolean; 
-  onClick: () => void; 
-  text: string; 
+  type: 'pie' | 'bar';
+  isActive: boolean;
+  onClick: () => void;
+  text: string;
 }
 
-const ChartButton: React.FC<ChartButtonProps> = ({ type, isActive, onClick, text }) => {
+export default function ChartButton({ type, isActive, onClick, text }: ChartButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -20,6 +20,4 @@ const ChartButton: React.FC<ChartButtonProps> = ({ type, isActive, onClick, text
       {text}
     </button>
   );
-};
-
-export default ChartButton;
+}

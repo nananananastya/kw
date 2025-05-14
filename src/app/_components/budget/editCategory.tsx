@@ -11,13 +11,7 @@ interface EditCategoryModalProps {
   onDelete?: (id: string) => void;
 }
 
-const EditCategoryModal = ({
-  isOpen,
-  onClose,
-  category,
-  onSave,
-  onDelete,
-}: EditCategoryModalProps) => {
+export default function EditCategoryModal ({ isOpen, onClose, category, onSave, onDelete }: EditCategoryModalProps) {
   const [name, setName] = useState(category.name);
   const [limit, setLimit] = useState(category.limit);
 
@@ -66,5 +60,3 @@ const EditCategoryModal = ({
     </EditModalWrapper>
   );
 };
-
-export default EditCategoryModal;

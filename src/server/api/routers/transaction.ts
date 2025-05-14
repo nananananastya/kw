@@ -76,18 +76,7 @@ getUserTransactions: protectedProcedure
     };
   }),
 
-  // Запрос для получения категорий по бюджету
-  getCategoriesByBudget: protectedProcedure
-    .input(z.object({ budgetId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      return ctx.db.category.findMany({
-        where: {
-          budgetId: input.budgetId,
-        },
-      });
-    }),
-
-// Мутация для создания транзакции
+// Создание транзакции
 createTransaction: protectedProcedure
   .input(
     z.object({
@@ -96,14 +85,13 @@ createTransaction: protectedProcedure
       type: z.enum(["INCOME", "EXPENSE"]),
       categoryId: z.string(),
       budgetId: z.string(),
-      date: z.string(), // ISO date string
+      date: z.string(), 
     })
   )
   .mutation(async ({ ctx, input }) => {
     const userId = ctx.session.user.id;
     const { amount, type, budgetId, categoryId } = input;
 
-    // Получаем текущий бюджет и категорию
     const [budget, category] = await Promise.all([
       ctx.db.budget.findUnique({ where: { id: budgetId } }),
       ctx.db.category.findUnique({ where: { id: categoryId } }),
@@ -115,14 +103,12 @@ createTransaction: protectedProcedure
 
     const signedAmount = type === "EXPENSE" ? -amount : amount;
 
-    // Проверка на выход за рамки бюджета
     const newBudgetAmount = (budget.amount ?? 0) + signedAmount;
     if (newBudgetAmount < 0) {
       return { success: false, message: "Недостаточно средств в бюджете" };
     }
 
     try {
-      // Создаем транзакцию и обновляем только бюджет
       const createdTransaction = await ctx.db.$transaction(async (prisma) => {
         const transaction = await prisma.transaction.create({
           data: {
@@ -136,7 +122,6 @@ createTransaction: protectedProcedure
           },
         });
 
-        // Обновляем только бюджет, без изменения limit категории
         await prisma.budget.update({
           where: { id: budgetId },
           data: {
@@ -154,6 +139,7 @@ createTransaction: protectedProcedure
     }
   }),
 
+  // Изменение транзакции
   updateTransaction: protectedProcedure
   .input(
     z.object({
@@ -235,19 +221,19 @@ createTransaction: protectedProcedure
     }
   }),
 
+ //Удаление транзакции 
   deleteTransaction: protectedProcedure
   .input(z.object({ transactionId: z.string() }))
   .mutation(async ({ ctx, input }) => {
     try {
-      // Проверяем, может ли пользователь редактировать или удалять транзакцию
       const canDeleteResult = await canEditOrDeleteTransaction({
         db: ctx.db,
-        userId: ctx.session.user.id, // id текущего пользователя из сессии
+        userId: ctx.session.user.id, 
         transactionId: input.transactionId,
         actionType: 'delete',
       });
 
-      // Если прав нет, возвращаем сообщение
+
       if (!canDeleteResult.success) {
         return {
           success: false,
@@ -255,12 +241,11 @@ createTransaction: protectedProcedure
         };
       }
 
-      // Получаем полные данные транзакции, включая категорию
       const fullTransaction = await ctx.db.transaction.findUnique({
         where: { id: input.transactionId },
         include: {
-          budget: true, // Подключаем связанные с транзакцией данные о бюджете
-          category: true, // Подключаем связанные данные о категории
+          budget: true, 
+          category: true, 
         },
       });
 
@@ -271,7 +256,6 @@ createTransaction: protectedProcedure
         };
       }
 
-      // Получаем сумму бюджета и категории для корректного обновления
       const updatedBudgetAmount = fullTransaction.budget.amount ?? 0;
       const updateBudget = {
         amount: fullTransaction.type === 'INCOME'
@@ -286,7 +270,6 @@ createTransaction: protectedProcedure
           : updatedCategoryAmount + fullTransaction.amount,
       };
 
-      // Обновляем бюджет и категорию
       await ctx.db.budget.update({
         where: { id: fullTransaction.budget.id },
         data: updateBudget,
@@ -297,7 +280,6 @@ createTransaction: protectedProcedure
         data: updateCategory,
       });
 
-      // Удаляем транзакцию
       const deletedTransaction = await ctx.db.transaction.delete({
         where: { id: input.transactionId },
       });

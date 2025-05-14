@@ -4,19 +4,16 @@ import { api } from '~/trpc/react';
 import { FaWallet, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
-const Card = ({
-  title,
-  value,
-  icon,
-}: {
+interface CardProps {
   title: string;
   value: number;
   icon: React.ReactNode;
-}) => (
+}
+
+const Card = ({ title, value, icon }: CardProps ) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
-    className="flex items-center gap-4 p-5 rounded-2xl border border-gray-300 bg-white shadow-sm"
-  >
+    className="flex items-center gap-4 p-5 rounded-2xl border border-gray-300 bg-white shadow-sm">
     <div className="text-gray-700 text-2xl">{icon}</div>
     <div>
       <p className="text-gray-500 text-sm">{title}</p>
@@ -26,7 +23,7 @@ const Card = ({
 );
 
 export default function DashboardSummary() {
-  const { data, isLoading } = api.home.summary.useQuery();
+  const { data, isLoading } = api.budget.summary.useQuery();
 
   if (isLoading || !data) return <p>Загрузка...</p>;
 

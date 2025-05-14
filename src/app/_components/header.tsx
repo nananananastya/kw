@@ -1,11 +1,7 @@
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-interface HeaderProps {
-  title: string;
-}
-
-export const Header = ({ title }: HeaderProps) => {
+export function Header ({ title }: { title: string }) {
   const currentDate = format(new Date(), 'dd MMMM yyyy', { locale: ru });
 
   return (

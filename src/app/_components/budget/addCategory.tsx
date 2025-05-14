@@ -3,19 +3,19 @@
 import { AddEntityModal } from './baseAdd';
 import { api } from '~/trpc/react';
 
-interface Props {
+interface CategoryProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (name: string, limit: number, budgetId: string) => void;
   budgetId: string;
 }
 
-export const AddCategoryModal = ({ isOpen, onClose, onAdd, budgetId }: Props) => {
-  const utils = api.useUtils(); // утилиты TRPC
+export function AddCategoryModal ({ isOpen, onClose, onAdd, budgetId }: CategoryProps) {
+  const utils = api.useUtils(); 
 
-  const createCategory = api.budget.addCategoryToBudget.useMutation({
+  const createCategory = api.category.addCategoryToBudget.useMutation({
     onSuccess: async () => {
-      await utils.budget.getCategoriesWithExpenses.invalidate(budgetId);
+      await utils.category.getCategoriesWithExpenses.invalidate(budgetId);
       onClose(); 
     },
   });

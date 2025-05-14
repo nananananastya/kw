@@ -1,6 +1,6 @@
 import { Select } from '../select';
 import { DateField } from '../dateField';
-import { Category, TransactionType } from '@prisma/client';
+import { Category, TransactionType, Budget } from '@prisma/client';
 import React from 'react';
 
 interface TransactionFiltersProps {
@@ -17,10 +17,11 @@ interface TransactionFiltersProps {
     sortOrder: 'asc' | 'desc';
     setSortOrder: React.Dispatch<React.SetStateAction<'asc' | 'desc'>>;
     categories: Category[];
-    budgets: any[]; 
+    budgets: Budget[]; 
     budgetFilter: string;
     setBudgetFilter: (budget: string) => void;
   }
+  
   export const TransactionFilters = ({
     startDate,
     setStartDate,

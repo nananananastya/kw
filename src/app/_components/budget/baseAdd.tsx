@@ -20,17 +20,10 @@ interface AddEntityModalProps {
   onSubmit: (values: Record<string, string>) => void;
 }
 
-export const AddEntityModal = ({
-  isOpen,
-  onClose,
-  title,
-  fields,
-  onSubmit,
-}: AddEntityModalProps) => {
+export function AddEntityModal ({ isOpen, onClose, title, fields, onSubmit }: AddEntityModalProps) {
   const [values, setValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // При открытии формы сбрасываем значения
     if (isOpen) {
       const initialValues: Record<string, string> = {};
       fields.forEach(field => {

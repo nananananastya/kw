@@ -30,7 +30,7 @@ export function TransactionList() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const { data: budgets = [] } = api.budget.getUserBudgets.useQuery();
-  const { data: categories = [] } = api.transaction.getCategoriesByBudget.useQuery(
+  const { data: categories = [] } = api.category.getCategoriesByBudget.useQuery(
     { budgetId: budgetFilter },
     { enabled: !!budgetFilter }
   );

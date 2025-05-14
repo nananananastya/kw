@@ -1,4 +1,3 @@
-// app/(app)/analytics/page.tsx
 import { auth } from "~/server/auth";
 import { Header } from "../_components/header";
 import SummaryStatistics from "../_components/analytics/summaryStatistics";

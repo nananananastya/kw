@@ -4,19 +4,14 @@ import { api } from '~/trpc/react';
 import { Dialog } from '@headlessui/react';
 import { toast } from 'react-hot-toast';
 
-interface Props {
+interface MembersProps {
   isOpen: boolean;
   onClose: () => void;
   budgetId: string | null;
   isOwner: boolean;
 }
 
-export const BudgetMembersModal: React.FC<Props> = ({
-  isOpen,
-  onClose,
-  budgetId,
-  isOwner,
-}) => {
+export function BudgetMembersModal ({ isOpen, onClose, budgetId, isOwner }: MembersProps) {
   const { data: members = [], refetch } = api.budget.getBudgetMembers.useQuery(
     { budgetId: budgetId ?? '' },
     {

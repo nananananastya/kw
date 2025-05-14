@@ -13,17 +13,17 @@ interface AddMoneyToGoalModalProps {
   onClose: () => void;
 }
 
-const AddMoneyToGoalModal: React.FC<AddMoneyToGoalModalProps> = ({ goalId, isOpen, onClose }) => {
+export default function AddMoneyToGoalModal ({ goalId, isOpen, onClose }: AddMoneyToGoalModalProps) {
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>(''); 
   const { data: userBudgets = [], isLoading } = api.budget.getUserBudgets.useQuery();
   const decreaseBudgetMutation = api.budget.decreaseBudgetBalance.useMutation();
   const utils = api.useUtils();
 
-  const addMoneyMutation = api.budget.addAmountToGoal.useMutation({
+  const addMoneyMutation = api.goal.addAmountToGoal.useMutation({
     onSuccess: () => {
       toast.success('Деньги успешно добавлены в цель');
-      utils.budget.getUserGoals.invalidate();
+      utils.goal.getUserGoals.invalidate();
       if (selectedBudgetId) {
         utils.budget.getBudgetSummary.invalidate({ budgetId: selectedBudgetId }); 
       }
@@ -125,5 +125,3 @@ const AddMoneyToGoalModal: React.FC<AddMoneyToGoalModalProps> = ({ goalId, isOpe
     </div>
   );
 };
-
-export default AddMoneyToGoalModal;

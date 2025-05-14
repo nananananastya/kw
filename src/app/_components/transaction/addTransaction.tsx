@@ -14,7 +14,7 @@ const transactionTypeLabels: Record<TransactionType, string> = {
   EXPENSE: "Расход",
 };
 
-export const AddTransactionForm = () => {
+export function AddTransactionForm() {
   const utils = api.useUtils(); 
 
   const createTransaction = api.transaction.createTransaction.useMutation({
@@ -32,17 +32,15 @@ export const AddTransactionForm = () => {
     }
   });
   
-  
-
   const { data: budgets = [], isLoading: loadingBudgets } = api.budget.getUserBudgets.useQuery();
   const [selectedBudgetId, setSelectedBudgetId] = useState<string>("");
 
-  const { data: categories = [], isLoading: loadingCategories } = api.budget.getCategoriesForBudget.useQuery(
-    selectedBudgetId,
-    {
-      enabled: !!selectedBudgetId,
-    }
-  );
+  const { data: categories = [], isLoading: loadingCategories } = api.category.getCategoriesByBudget.useQuery(
+  { budgetId: selectedBudgetId },
+  {
+    enabled: !!selectedBudgetId,
+  }
+);
 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");

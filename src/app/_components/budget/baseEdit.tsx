@@ -1,5 +1,5 @@
 import { Button } from "../button";
-import { GoX, GoTrash } from "react-icons/go"; // Импортируем иконки крестика и корзины
+import { GoX, GoTrash } from "react-icons/go";
 import React from 'react';
 
 interface EditModalWrapperProps {
@@ -9,20 +9,11 @@ interface EditModalWrapperProps {
   onSubmit: (e: React.FormEvent) => void;
   children: React.ReactNode;
   rightAction?: React.ReactNode;
-  onDelete?: () => void; // Сделано необязательным
-  disableDelete?: boolean; // Новый параметр для контроля доступности кнопки удаления
+  onDelete?: () => void;
+  disableDelete?: boolean;
 }
 
-export const EditModalWrapper = ({
-  isOpen,
-  onClose,
-  title,
-  onSubmit,
-  children,
-  rightAction,
-  onDelete,
-  disableDelete = false, // по умолчанию кнопка не отключена
-}: EditModalWrapperProps) => {
+export function EditModalWrapper ({ isOpen, onClose, title, onSubmit, children, rightAction, onDelete, disableDelete = false }: EditModalWrapperProps) {
   if (!isOpen) return null;
 
   return (
@@ -30,7 +21,7 @@ export const EditModalWrapper = ({
       <div className="bg-white p-6 rounded-md shadow-md w-96 relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-700">{title}</h2>
-          {onDelete && !disableDelete && ( // если onDelete есть и delete не отключен
+          {onDelete && !disableDelete && (
             <button
               onClick={onDelete}
               className="absolute right-12 text-pink-500 hover:text-red-700"

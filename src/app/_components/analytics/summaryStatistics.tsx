@@ -6,16 +6,11 @@ interface SummaryStatisticsProps {
   incomeExpenseRatio: number;
 }
 
-const SummaryStatistics: React.FC<SummaryStatisticsProps> = ({
-  averageExpenses,
-  largestExpenses,
-  incomeExpenseRatio,
-}) => {
+export default function SummaryStatistics ({ averageExpenses, largestExpenses, incomeExpenseRatio }: SummaryStatisticsProps) {
   if (averageExpenses === undefined || largestExpenses === undefined || incomeExpenseRatio === undefined) {
     return <div className="text-gray-500 italic">Нет сводной статистики для отображения.</div>;
   }
 
-  // Форматируем числа для лучшего отображения
   const formattedAverageExpenses = averageExpenses.toLocaleString('ru-RU', {
     style: 'currency',
     currency: 'RUB',
@@ -33,19 +28,16 @@ const SummaryStatistics: React.FC<SummaryStatisticsProps> = ({
       <h2 className="text-2xl font-bold text-white mb-4">Сводная статистика</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        {/* Средние расходы */}
         <div className="flex flex-col items-center justify-center rounded-lg p-4">
           <div className="text-white font-medium mb-2">Средние расходы</div>
           <div className="text-3xl font-bold text-white">{formattedAverageExpenses}</div>
         </div>
 
-        {/* Крупнейшие траты */}
         <div className="flex flex-col items-center justify-center rounded-lg p-4">
           <div className="text-white font-medium mb-2">Крупнейшие траты</div>
           <div className="text-3xl font-bold text-white">{formattedLargestExpenses}</div>
         </div>
 
-        {/* Соотношение доходов/расходов */}
         <div className="flex flex-col items-center justify-center rounded-lg p-4">
           <div className="text-white font-medium mb-2">Доходы/Расходы</div>
           <div className="text-3xl font-bold text-white">{formattedIncomeExpenseRatio}</div>
@@ -54,5 +46,3 @@ const SummaryStatistics: React.FC<SummaryStatisticsProps> = ({
     </div>
   );
 };
-
-export default SummaryStatistics;

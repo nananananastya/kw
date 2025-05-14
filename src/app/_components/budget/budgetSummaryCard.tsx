@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import { api } from "~/trpc/react";
-import { BalanceCard } from "./balanceCard";
+import BalanceCard from "./balanceCard";
 import { IncomeExpenseCard } from "./incomeExpenseCard";
 
-interface BudgetSummaryCardProps {
-  budgetId: string;
-}
-export const BudgetSummaryCard = ({ budgetId }: BudgetSummaryCardProps) => {
+export function BudgetSummaryCard ({ budgetId }: { budgetId: string }) {
   const [isFlippedBalance, setIsFlippedBalance] = useState(false);
   const [isFlippedIncome, setIsFlippedIncome] = useState(false);
   const summary = api.budget.getBudgetSummary.useQuery({ budgetId });

@@ -1,20 +1,20 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 
-// Здесь будет добавлен новый запрос, который получает данные по доходам и расходам за выбранный период и бюджет
+
 export const analyticsRouter = createTRPCRouter({
+  // Получение данных по доходам и расходам за выбранный период и бюджет
   getSummaryStatistics: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ ctx, input }) => {
       const { userId } = input;
 
-      // Получаем текущую дату
       const currentDate = new Date();
       
-      // Рассчитываем начало и конец периода (за последний месяц)
-      const endDate = currentDate.toISOString(); // Сегодня
+      // Рассчет начало и конец периода (за последний месяц)
+      const endDate = currentDate.toISOString(); 
       const startDate = new Date(currentDate);
-      startDate.setMonth(currentDate.getMonth() - 1); // 1 месяц назад
+      startDate.setMonth(currentDate.getMonth() - 1); 
       const startDateISO = startDate.toISOString();
 
       // Выполняем агрегирование с фильтрацией по датам
@@ -24,8 +24,7 @@ export const analyticsRouter = createTRPCRouter({
             userId,
             type: 'EXPENSE',
             date: {
-              gte: startDateISO, // Начало периода
-              lte: endDate, // Конец периода
+              lte: endDate, 
             },
           },
           _avg: { amount: true },
@@ -77,6 +76,7 @@ export const analyticsRouter = createTRPCRouter({
       };
     }),
 
+    // Получение данных для графика по расходам для категорий
     getCategoryAnalyticsByBudget: protectedProcedure
     .input(
       z.object({
@@ -89,7 +89,6 @@ export const analyticsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { budgetId, period, startDate, endDate } = input;
   
-      // Фильтр по дате
       let dateFilter = {};
       if (period === 'lastMonth') {
         const lastMonth = new Date();
@@ -104,7 +103,6 @@ export const analyticsRouter = createTRPCRouter({
         };
       }
   
-      // Получаем все категории с их транзакциями типа EXPENSE
       const categories = await ctx.db.category.findMany({
         where: { budgetId },
         include: {
@@ -117,7 +115,6 @@ export const analyticsRouter = createTRPCRouter({
         },
       });
   
-      // Формируем итоговую аналитику по категориям
       return categories.map((category) => ({
         category: category.name,
         value: category.transactions.reduce((sum, t) => sum + t.amount, 0),
@@ -125,8 +122,7 @@ export const analyticsRouter = createTRPCRouter({
     }),
   
   
-  
-
+  // Плучение доходов и расходов для графика 
   getIncomeExpenseByBudget: protectedProcedure
   .input(
     z.object({
@@ -141,18 +137,18 @@ export const analyticsRouter = createTRPCRouter({
 
     if (input.period === "lastMonth") {
       const today = new Date();
-      const lastMonth = new Date(today.setMonth(today.getMonth() - 1)); // Получаем дату месяца назад
+      const lastMonth = new Date(today.setMonth(today.getMonth() - 1)); 
       dateFilter = {
         date: {
-          gte: lastMonth, // Период с месяца назад
-          lte: new Date(), // До текущей даты
+          gte: lastMonth, 
+          lte: new Date(), 
         },
       };
     } else if (input.period === "custom" && input.startDate && input.endDate) {
       dateFilter = {
         date: {
-          gte: new Date(input.startDate), // Период с выбранной даты "от"
-          lte: new Date(input.endDate),   // До выбранной даты "до"
+          gte: new Date(input.startDate), 
+          lte: new Date(input.endDate),   
         },
       };
     }
@@ -160,7 +156,7 @@ export const analyticsRouter = createTRPCRouter({
     const transactions = await ctx.db.transaction.findMany({
       where: {
         budgetId: input.budgetId,
-        ...dateFilter, // Применяем фильтрацию по датам
+        ...dateFilter, 
       },
       select: {
         date: true,
@@ -169,7 +165,6 @@ export const analyticsRouter = createTRPCRouter({
       },
     });
 
-    // Группировка по дате и агрегация доходов/расходов
     const grouped: Record<string, { income: number; expense: number }> = {};
 
     for (const tx of transactions) {
@@ -189,6 +184,4 @@ export const analyticsRouter = createTRPCRouter({
       expense,
     }));
   }),
-
-
 });

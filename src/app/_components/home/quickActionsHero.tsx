@@ -29,7 +29,7 @@ const actions: QuickAction[] = [
   },
 ];
 
-const QuickActionsHero: React.FC = () => {
+export default function QuickActionsHero() {
   const router = useRouter();
 
   return (
@@ -53,5 +53,3 @@ const QuickActionsHero: React.FC = () => {
     </div>
   );
 };
-
-export default QuickActionsHero;

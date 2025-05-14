@@ -10,15 +10,7 @@ interface InputProps {
   disabled?: boolean;  
 }
 
-export const Input = ({
-  type,
-  value,
-  onChange,
-  placeholder,
-  error,
-  readOnly = false,  
-  disabled = false,  
-}: InputProps) => {
+export function Input ({ type, value, onChange, placeholder, error, readOnly = false, disabled = false }: InputProps) {
   return (
     <div className="relative">
       <input

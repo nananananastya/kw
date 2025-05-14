@@ -1,6 +1,6 @@
 import React from 'react';
 
-type TransactionItemProps = {
+interface TransactionItemProps {
   transaction: {
     id: string;
     date: Date; 
@@ -12,7 +12,7 @@ type TransactionItemProps = {
   onClick: (id: string | null) => void;
 };
 
-export const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, onClick }) => {
+export function TransactionItem ({ transaction, onClick }: TransactionItemProps) {
   const isIncome = transaction.type === "INCOME";
 
   const formattedDate = transaction.date.toLocaleDateString("ru-RU");

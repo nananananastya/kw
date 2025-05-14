@@ -4,16 +4,13 @@ import { AddEntityModal } from './baseAdd';
 import { api } from '~/trpc/react';
 import React from 'react'; 
 
-export interface AddBudgetModalProps {
+interface AddBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddGroup: (groupId: string, groupName: string) => void;
 }
 
-export const AddBudgetModal = ({
-  isOpen,
-  onClose,
-}: AddBudgetModalProps) => {
+export function AddBudgetModal ({ isOpen, onClose }: AddBudgetModalProps) {
   const utils = api.useUtils();
   const createBudget = api.budget.create.useMutation({
     onSuccess: async () => {

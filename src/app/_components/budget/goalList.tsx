@@ -9,9 +9,14 @@ import EditGoalModal from './editGoal';
 import { AddGoalModal } from './addGoal';
 import AddMoneyToGoalModal from './addMoneyGoal';
 
-const FinancialGoalsList = () => {
-  const { data: financialGoals = [], isLoading, error } = api.budget.getUserGoals.useQuery();
-  const updateGoal = api.budget.updateGoal.useMutation();
+type GoalInput = {
+  name?: string;
+  targetAmount?: number | string;
+  targetDate?: Date | string;
+};
+
+export default function FinancialGoalsList() {
+  const { data: financialGoals = [], isLoading, error } = api.goal.getUserGoals.useQuery();
   
   const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -20,19 +25,26 @@ const FinancialGoalsList = () => {
 
   const utils = api.useUtils();
 
-  const deleteGoal = api.budget.deleteGoal.useMutation({
+  const deleteGoal = api.goal.deleteGoal.useMutation({
     onSuccess: () => {
-      utils.budget.getUserGoals.invalidate();
+      utils.goal.getUserGoals.invalidate();
       setIsEditModalOpen(false); 
     },
   });
 
-  const addGoal = api.budget.addGoal.useMutation({
+  const addGoal = api.goal.addGoal.useMutation({
     onSuccess: () => {
-      utils.budget.getUserGoals.invalidate();
+      utils.goal.getUserGoals.invalidate();
       setIsAddGoalModalOpen(false);
     },
   });
+
+  const updateGoal = api.goal.updateGoal.useMutation({
+  onSuccess: () => {
+    utils.goal.getUserGoals.invalidate();
+    setIsEditModalOpen(false);
+  },
+});
 
   const handleGoalClick = (goal: any) => {
     setGoalToEdit(goal);  
@@ -44,18 +56,16 @@ const FinancialGoalsList = () => {
       id,
       name,
       targetAmount,
-      currentAmount: 0, // Или актуальную сумму
+      currentAmount: goalToEdit.currentAmount,
       targetDate,
     });
-    utils.budget.getUserGoals.invalidate();
-    setIsEditModalOpen(false);
   };
 
   const handleDeleteGoal = (id: string) => {
     deleteGoal.mutate({ id });
   };
 
-  const handleAddGoal = (goalData: Record<string, string | number | Date | undefined>) => {
+  const handleAddGoal = (goalData: GoalInput) => {
     const formattedGoalData = {
       name: String(goalData.name || ''), 
       targetAmount: Number(goalData.targetAmount),
@@ -154,6 +164,3 @@ const FinancialGoalsList = () => {
     </div>
   );
 };
-
-
-export default FinancialGoalsList;

@@ -1,76 +1,68 @@
 import React, { useState } from "react";
 import ReactCardFlip from "react-card-flip";
 import { api } from '~/trpc/react';
+import { toast } from 'react-hot-toast';
 
-export const BalanceCard = ({
-  balance,
-  expense,
-  isFlipped,
-  setIsFlipped,
-  budgetId
-}: {
+interface BalanceCardProps {
   balance: number;
   expense: number;
   isFlipped: boolean;
   setIsFlipped: (flipped: boolean) => void;
   budgetId: string;
-}) => {
-  const [amount, setAmount] = useState<string>(''); // Используем строку для корректного ввода
+}
+
+export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped, budgetId }: BalanceCardProps) {
+  const [amount, setAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const updateBalance = api.budget.updateBudgetBalance.useMutation();
   const decreaseBalance = api.budget.decreaseBudgetBalance.useMutation();
-
   const utils = api.useUtils();
 
   const handleSubmit = (type: "add" | "subtract") => {
-    if (isLoading || amount === '') return; // Не выполняем операцию, если сумма не введена
-
-    const parsedAmount = parseFloat(amount); // Преобразуем строку в число
-
-    if (isNaN(parsedAmount) || parsedAmount <= 0) return; // Проверка на корректность суммы
+    if (isLoading || amount === '') return;
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
 
     setIsLoading(true);
 
-    // Обновление баланса
     if (type === "add") {
       updateBalance.mutate({ budgetId, amount: parsedAmount }, {
         onSuccess: () => {
           setIsFlipped(false);
           setIsLoading(false);
-          setAmount(''); // Очищаем поле ввода
+          setAmount('');
           utils.budget.getBudgetSummary.invalidate({ budgetId });
         },
-        onError: () => {
-          setIsLoading(false);
-          // Добавить обработку ошибок
-        }
+        onError: () => setIsLoading(false),
       });
-    } else if (type === "subtract") {
+    } else {
       decreaseBalance.mutate({ budgetId, amount: parsedAmount }, {
-        onSuccess: () => {
-          setIsFlipped(false);
+        onSuccess: (data) => {
           setIsLoading(false);
-          setAmount(''); // Очищаем поле ввода
+          if (data?.error) {
+            toast.error(data.error);
+            return;
+          }
+          setIsFlipped(false);
+          setAmount('');
+          toast.success("Средства успешно сняты");
           utils.budget.getBudgetSummary.invalidate({ budgetId });
         },
         onError: () => {
           setIsLoading(false);
-          // Добавить обработку ошибок
-        }
+          toast.error("Произошла ошибка при списании средств");
+        },
       });
     }
   };
 
-  // Функция для предотвращения переворота при клике на поле ввода
   const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Останавливает всплытие события
+    e.stopPropagation();
   };
 
-  // Функция для контроля ввода, чтобы не было ведущих нулей и пустых строк
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Убираем все символы кроме цифр и точки
     if (/^\d*\.?\d*$/.test(value)) {
       setAmount(value);
     }
@@ -89,9 +81,7 @@ export const BalanceCard = ({
         <div className="w-full h-1 mt-4 bg-white/20 rounded-full">
           <div
             className="h-full bg-white rounded-full"
-            style={{
-              width: `${Math.min((expense / balance) * 100, 100)}%`, // защита от выхода за пределы
-            }}
+            style={{ width: `${Math.min((expense / balance) * 100, 100)}%` }}
           />
         </div>
 
@@ -113,8 +103,8 @@ export const BalanceCard = ({
           placeholder="Введите сумму"
           className="mb-3 p-2 w-full rounded-md border border-gray-300 text-gray-800"
           value={amount}
-          onChange={handleAmountChange} // Используем новую функцию обработки ввода
-          onClick={handleInputClick} // добавляем обработчик
+          onChange={handleAmountChange}
+          onClick={handleInputClick}
         />
         <div className="flex gap-4">
           <button
@@ -135,4 +125,4 @@ export const BalanceCard = ({
       </div>
     </ReactCardFlip>
   );
-};
+}

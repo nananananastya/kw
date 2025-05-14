@@ -5,9 +5,9 @@ import AnalyticsChart from './analyticsChart';
 import IncomeExpenseChart from './incomeExpenseChart';
 import { api } from '~/trpc/react';
 import { Select } from "../select";
-import { DateField } from "../dateField"; // Импортируем компонент DateField
+import { DateField } from "../dateField";
 
-const AnalyticsChartContainer: React.FC = () => {
+export default function AnalyticsChartContainer() {
   const [selectedBudgetId, setSelectedBudgetId] = useState<string>('');
   const [period, setPeriod] = useState<'allTime' | 'lastMonth' | 'custom'>('allTime');
   const [startDate, setStartDate] = useState<string | undefined>(''); 
@@ -94,27 +94,26 @@ const AnalyticsChartContainer: React.FC = () => {
             </div>
           </div>
 
-          {/* Ввод дат для пользовательского периода */}
           {period === 'custom' && (
-  <div className="mb-4 flex gap-4 justify-start">
-    <div className="min-w-[200px]">
-      <label htmlFor="startDate" className="text-white text-l mb-2 block">Дата начала</label>
-      <DateField
-        value={startDate ? new Date(startDate) : null}
-        onChange={handleStartDateChange}
-        className="border border-transparent focus:ring-2 rounded-lg px-4 py-2 w-full transition duration-300"
-      />
-    </div>
-    <div className="min-w-[200px]">
-      <label htmlFor="endDate" className="text-white text-l mb-2 block">Дата окончания</label>
-      <DateField
-        value={endDate ? new Date(endDate) : null}
-        onChange={handleEndDateChange}
-        className="border border-transparent focus:ring-2 rounded-lg px-4 py-2 w-full transition duration-300"
-      />
-    </div>
-  </div>
-)}
+            <div className="mb-4 flex gap-4 justify-start">
+              <div className="min-w-[200px]">
+                <label htmlFor="startDate" className="text-white text-l mb-2 block">Дата начала</label>
+                <DateField
+                  value={startDate ? new Date(startDate) : null}
+                  onChange={handleStartDateChange}
+                  className="border border-transparent focus:ring-2 rounded-lg px-4 py-2 w-full transition duration-300"
+                />
+              </div>
+              <div className="min-w-[200px]">
+                <label htmlFor="endDate" className="text-white text-l mb-2 block">Дата окончания</label>
+                <DateField
+                  value={endDate ? new Date(endDate) : null}
+                  onChange={handleEndDateChange}
+                  className="border border-transparent focus:ring-2 rounded-lg px-4 py-2 w-full transition duration-300"
+                />
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
@@ -135,5 +134,3 @@ const AnalyticsChartContainer: React.FC = () => {
     </div>
   );
 };
-
-export default AnalyticsChartContainer;
