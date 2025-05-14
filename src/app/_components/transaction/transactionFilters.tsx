@@ -1,6 +1,8 @@
 import { Select } from '../select';
 import { DateField } from '../dateField';
 import { Category, TransactionType } from '@prisma/client';
+import React from 'react';
+
 interface TransactionFiltersProps {
     startDate: Date | null;
     setStartDate: (date: Date | null) => void;
@@ -67,7 +69,7 @@ interface TransactionFiltersProps {
           </div>
   
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Бюджет</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="budget-filter">Бюджет</label>
             <Select
               value={budgetFilter}
               onChange={(e) => setBudgetFilter(e.target.value)}
@@ -77,7 +79,7 @@ interface TransactionFiltersProps {
           </div>
   
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="category-filter">Категория</label>
             <Select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -87,7 +89,7 @@ interface TransactionFiltersProps {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Тип транзакции</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="type-filter">Тип транзакции</label>
             <Select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as TransactionType | '')}
@@ -97,7 +99,7 @@ interface TransactionFiltersProps {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Сортировать по</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="sort-by-filter">Сортировать по</label>
             <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'amount' | 'date')}
@@ -107,7 +109,7 @@ interface TransactionFiltersProps {
           </div>
   
           <div >
-            <label className="block text-sm font-medium text-gray-700 mb-1">Порядок сортировки</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="sort-order-filter">Порядок сортировки</label>
             <Select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}

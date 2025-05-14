@@ -1,7 +1,7 @@
 import { describe, it, vi, beforeEach, expect, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
-import EditCategoryModal from '../src/app/_components/budget/editCategory'; // Путь до компонента
-import { Category } from '@prisma/client'; // Для использования типа Category
+import EditCategoryModal from '../src/app/_components/budget/editCategory'; 
+import { Category } from '@prisma/client'; 
 import React from 'react';
 
 describe('EditCategoryModal', () => {

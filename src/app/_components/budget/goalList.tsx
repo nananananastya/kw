@@ -11,6 +11,7 @@ import AddMoneyToGoalModal from './addMoneyGoal';
 
 const FinancialGoalsList = () => {
   const { data: financialGoals = [], isLoading, error } = api.budget.getUserGoals.useQuery();
+  const updateGoal = api.budget.updateGoal.useMutation();
   
   const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -38,8 +39,15 @@ const FinancialGoalsList = () => {
     setIsEditModalOpen(true);  
   };
 
-  const handleSaveGoal = (id: string, name: string) => {
-    console.log('Сохранение изменений для цели:', id, name);
+  const handleSaveGoal = (id: string, name: string, targetAmount: number, targetDate: Date) => {
+    updateGoal.mutate({
+      id,
+      name,
+      targetAmount,
+      currentAmount: 0, // Или актуальную сумму
+      targetDate,
+    });
+    utils.budget.getUserGoals.invalidate();
     setIsEditModalOpen(false);
   };
 
@@ -146,5 +154,6 @@ const FinancialGoalsList = () => {
     </div>
   );
 };
+
 
 export default FinancialGoalsList;
