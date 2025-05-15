@@ -9,8 +9,6 @@ export default async function BudgetPage() {
     <>
       <Header title={"Бюджет"} />
       <BudgetSelect />
-      <FinancialGoalsList />
-      
     </>
   );
 }

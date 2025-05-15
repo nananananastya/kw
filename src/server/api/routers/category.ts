@@ -110,7 +110,7 @@ export const categoryRouter = createTRPCRouter({
 
         return { message: "Категория успешно удалёна" };
     } catch (err) {
-        return { error: (err as Error).message };
+        return { error: "Что-то пошло не так" };
     }
     }),
 
