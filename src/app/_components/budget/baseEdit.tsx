@@ -7,13 +7,11 @@ interface EditModalWrapperProps {
   onClose: () => void;
   title: string;
   onSubmit: (e: React.FormEvent) => void;
-  children: React.ReactNode;
-  rightAction?: React.ReactNode;
+  children: React.ReactNode; // вложенгные элементы 
   onDelete?: () => void;
-  disableDelete?: boolean;
 }
 
-export function EditModalWrapper ({ isOpen, onClose, title, onSubmit, children, rightAction, onDelete, disableDelete = false }: EditModalWrapperProps) {
+export function EditModalWrapper ({ isOpen, onClose, title, onSubmit, children, onDelete }: EditModalWrapperProps) {
   if (!isOpen) return null;
 
   return (
@@ -21,7 +19,7 @@ export function EditModalWrapper ({ isOpen, onClose, title, onSubmit, children, 
       <div className="bg-white p-6 rounded-md shadow-md w-96 relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-700">{title}</h2>
-          {onDelete && !disableDelete && (
+          {onDelete && (
             <button
               onClick={onDelete}
               className="absolute right-12 text-pink-500 hover:text-red-700"

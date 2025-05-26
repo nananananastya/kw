@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from "react";
 import { EditModalWrapper } from "./baseEdit"; 
 import { Category } from "@prisma/client";
@@ -12,16 +14,18 @@ interface EditCategoryModalProps {
 }
 
 export default function EditCategoryModal ({ isOpen, onClose, category, onSave, onDelete }: EditCategoryModalProps) {
+  // локальные состояния для изменяемых значений
   const [name, setName] = useState(category.name);
   const [limit, setLimit] = useState(category.limit);
 
+  // для того чтобы при открытии нескольких категорий вподряд 
   useEffect(() => {
     setName(category.name);
     setLimit(category.limit);
   }, [category]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // блокировка перезагрузки страницы 
     onSave(category.id, name, limit);
     onClose(); 
   };
@@ -54,7 +58,8 @@ export default function EditCategoryModal ({ isOpen, onClose, category, onSave, 
           className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
           value={limit}
           onChange={(e) => setLimit(Number(e.target.value))}
-          required
+          //  поля не должны быть пустыми
+          required 
         />
       </div>
     </EditModalWrapper>

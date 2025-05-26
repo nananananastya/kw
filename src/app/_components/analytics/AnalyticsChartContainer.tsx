@@ -8,13 +8,15 @@ import { Select } from "../select";
 import { DateField } from "../dateField";
 
 export default function AnalyticsChartContainer() {
-  const [selectedBudgetId, setSelectedBudgetId] = useState<string>('');
-  const [period, setPeriod] = useState<'allTime' | 'lastMonth' | 'custom'>('allTime');
+  const [selectedBudgetId, setSelectedBudgetId] = useState<string>('');   //  выбранныйй бюджет 
+  const [period, setPeriod] = useState<'allTime' | 'lastMonth' | 'custom'>('allTime'); // выбранный период
+  // для пользовательского периода 
   const [startDate, setStartDate] = useState<string | undefined>(''); 
   const [endDate, setEndDate] = useState<string | undefined>(''); 
 
-  const { data: budgets = [], isLoading: loadingBudgets } = api.budget.getUserBudgets.useQuery();
+  const { data: budgets = [], isLoading: loadingBudgets } = api.budget.getUserBudgets.useQuery(); // бюджеты к которым есть доступ у пользователя
 
+  // для круговой и столбчатой диаграммы
   const { data: chartData = [], isLoading: loadingChart } = api.analytics.getCategoryAnalyticsByBudget.useQuery(
     { 
       budgetId: selectedBudgetId,
@@ -25,6 +27,7 @@ export default function AnalyticsChartContainer() {
     { enabled: !!selectedBudgetId }
   );
 
+// для линейного графика
   const { data: incomeExpenseData = [], isLoading: loadingIncomeExpense } = api.analytics.getIncomeExpenseByBudget.useQuery(
     {
       budgetId: selectedBudgetId,
@@ -35,6 +38,7 @@ export default function AnalyticsChartContainer() {
     { enabled: !!selectedBudgetId }
   );
 
+  // для выбора первого бюджета
   useEffect(() => {
     if (!selectedBudgetId && budgets && budgets.length > 0) {
       const firstBudget = budgets[0];
@@ -45,6 +49,7 @@ export default function AnalyticsChartContainer() {
   }, [budgets, selectedBudgetId]);
   
 
+// обработчик соьытий при изменении периода 
   const handlePeriodChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedPeriod = event.target.value as 'allTime' | 'lastMonth' | 'custom';
     setPeriod(selectedPeriod);
@@ -55,6 +60,7 @@ export default function AnalyticsChartContainer() {
     }
   };
 
+// преобразование данных в строку
   const handleStartDateChange = (date: Date | null) => {
     setStartDate(date ? date.toISOString().split('T')[0] : '');
   };

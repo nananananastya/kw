@@ -21,9 +21,7 @@ describe('AddBudgetModal', () => {
 
   const mockInvalidate = vi.fn();
   const mockMutate = vi.fn();
-  const mockCreateMutation = {
-    mutate: mockMutate,
-  };
+
 
   beforeEach(() => {
     vi.clearAllMocks();

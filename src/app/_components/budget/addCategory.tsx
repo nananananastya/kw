@@ -30,6 +30,7 @@ export function AddCategoryModal ({ isOpen, onClose, onAdd, budgetId }: Category
         { name: 'limit', label: 'Лимит (₽)', type: 'number', placeholder: '00.00' },
       ]}
       onSubmit={(values) => {
+        // вытаскиваем данные из полей и передаем в мутацию
         const name = values.name!.trim();
         const limit = parseFloat(values.limit!);
 

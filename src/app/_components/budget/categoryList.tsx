@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { api } from '~/trpc/react';
 import ItemList from './itemList';
 import { GoPlus } from 'react-icons/go';
@@ -8,13 +8,14 @@ import { toast } from 'react-hot-toast';
 interface CategoryListProps {
   budgetId: string;
   setAddCategoryModalOpen: (open: boolean) => void;
-  refetchCategories?: { current: () => void };
   isOwner: boolean;
 }
 
-
-export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategories, isOwner }: CategoryListProps) {
+export function CategoryList({ budgetId, setAddCategoryModalOpen, isOwner}: CategoryListProps) {
+  // Получаем категории
   const { data: categories = [], isLoading, error, refetch } = api.category.getCategoriesWithExpenses.useQuery(budgetId);
+
+  // Управляют открытием/закрытием модалки и данными текущей редактируемой категории
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<{
     id: string;
@@ -25,6 +26,7 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
 
   const utils = api.useUtils();
 
+  // Мутация обновления категории
   const updateCategory = api.category.updateCategory.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
@@ -36,12 +38,7 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
     },
   });
 
-  useEffect(() => {
-    if (refetchCategories) {
-      refetchCategories.current = refetch;
-    }
-  }, [refetch, refetchCategories]);
-
+  // Мутация удаления категории
   const deleteCategory = api.category.deleteCategory.useMutation({
     onSuccess: (data) => {
       if (data?.error) {
@@ -50,11 +47,13 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
         toast.success(data.message);
         utils.category.getCategoriesWithExpenses.invalidate(budgetId);
         setIsEditModalOpen(false);
+
       }
     },
   });
 
-  const handleOwnerAction = (isOwner: boolean, action: () => void, errorMessage: string) => {
+  // проверка прав владельца
+  const handleOwnerAction = (action: () => void, errorMessage: string) => {
     if (!isOwner) {
       toast.error(errorMessage);
       return;
@@ -68,9 +67,9 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
     return <div>Ошибка при загрузке категорий. Попробуйте позже.</div>;
   }
 
+  // Обработчик клика по категории
   const handleCategoryClick = (category: { id: string; name: string; limit: number; spent: number }) => {
     handleOwnerAction(
-      isOwner,
       () => {
         setCategoryToEdit(category);
         setIsEditModalOpen(true);
@@ -79,14 +78,15 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
     );
   };
 
+  // Сохраняем изменения категории
   const handleSaveCategory = (id: string, name: string, limit: number) => {
     updateCategory.mutate({ id, name, limit });
     setIsEditModalOpen(false);
   };
 
+  // Удаляем категорию
   const handleDeleteCategory = (id: string) => {
     handleOwnerAction(
-      isOwner,
       () => {
         if (confirm("Точно удалить категорию?")) {
           deleteCategory.mutate({ id });
@@ -107,7 +107,6 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
             <button
               onClick={() => {
                 handleOwnerAction(
-                  isOwner,
                   () => setAddCategoryModalOpen(true),
                   "Добавлять категории может только владелец бюджета"
                 );
@@ -131,7 +130,8 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
               onClick={() => handleCategoryClick(category)}
             >
               <div>
-                <p className="text-gray-700">{category.name}</p>
+                <p className="text-gray-700">{category.name}</p> 
+                {/* Сколько потрачено и лимиь */}
                 <p className="text-sm text-gray-500">
                   Потрачено:{" "}
                   <span className={isOverLimit ? "text-red-500 font-medium" : ""}>
@@ -140,6 +140,7 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, refetchCategor
                   из ₽{category.limit.toFixed(2)}
                 </p>
               </div>
+            {/* прогресбар */}
               <div className="w-24 h-4 bg-gray-200 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${progressColor}`}

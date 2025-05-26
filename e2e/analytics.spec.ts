@@ -1,4 +1,5 @@
 import { test as base, expect, Page } from '@playwright/test';
+// npx playwright test e2e/analytics.spec.ts --headed
 
 let authedPage: Page;
 

@@ -15,7 +15,7 @@ export function BudgetMembersModal ({ isOpen, onClose, budgetId, isOwner }: Memb
   const { data: members = [], refetch } = api.budget.getBudgetMembers.useQuery(
     { budgetId: budgetId ?? '' },
     {
-      enabled: !!budgetId,
+      enabled: !!budgetId, //запрос не выполнится, пока budgetId пустой
     }
   );
 

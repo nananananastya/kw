@@ -12,15 +12,15 @@ import { BudgetSummaryCard } from './budgetSummaryCard';
 import { BudgetMembersModal } from './budgetMembersModal';
 
 export default function BudgetSelect() {
-  const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery();
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const { data: groups = [], isLoading, refetch } = api.budget.getUserBudgets.useQuery(); // isLoading - флаг загрузки, refetch - функция для повтора запроса
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null); // хранение выбранной группы
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+ 
 
-  const refetchCategories = useRef<() => void>(() => {});
-
+  // чтобы при открытии страницы открывался первый бюджет 
   useEffect(() => {
     if (groups.length > 0 && !selectedGroupId) {
       const firstBudget = groups[0];
@@ -42,10 +42,11 @@ export default function BudgetSelect() {
     },
   });
 
-  const utils = api.useUtils();
+  const utils = api.useUtils(); // позволяют управлять кэшом данных
 
   const { mutateAsync: addCategory } = api.category.addCategoryToBudget.useMutation({
     onSuccess: () => {
+      // обновляем кэш категорий у текущей группы, чтобы интерфейс сразу показал новую категорию без перезагрузки
       if (selectedGroupId) {
         utils.category.getCategoriesWithExpenses.invalidate(selectedGroupId);
       }
@@ -53,8 +54,8 @@ export default function BudgetSelect() {
   });
 
   const handleAddCategory = async (name: string, limit: number, budgetId: string) => {
-
     await addCategory({ name, limit, budgetId });
+    // принуждает перезапросить свежие данные с сервера, тк кэш утсрел после добавления новой категории
     utils.category.getCategoriesWithExpenses.invalidate(budgetId);
   };
 
@@ -70,6 +71,7 @@ export default function BudgetSelect() {
   const activeStyle = 'bg-gradient-to-r from-pink-400 to-purple-500 text-white';
   const inactiveStyle = 'bg-gray-200 text-gray-700 hover:bg-gray-300';
 
+  // изменение текущий группы бюджета
   const handleGroupChange = (groupId: string) => {
     setSelectedGroupId(groupId);
   };
@@ -86,7 +88,9 @@ export default function BudgetSelect() {
       {selectedGroupId && <BudgetSummaryCard budgetId={selectedGroupId} />}
       <div className="container mx-auto bg-white shadow-lg rounded-xl p-4 w-full transition-all duration-300 mb-6">
         <div className="flex items-center justify-between mb-4">
+          {/* слева название */}
           <h2 className="text-2xl font-semibold text-gray-700">Группа бюджета</h2>
+          {/* справа иконки для работы с бюджетами */}
           <div className="flex gap-3">
             <button
               onClick={() => setIsCreateModalOpen(true)}
@@ -128,6 +132,7 @@ export default function BudgetSelect() {
           </div>
         </div>
 
+        {/* перебираем все группы, рисуем их кнопками */}
         <div className="flex flex-wrap gap-4">
           {groups.map((group) => (
             <button
@@ -144,7 +149,6 @@ export default function BudgetSelect() {
           <CategoryList
             budgetId={selectedGroupId}
             setAddCategoryModalOpen={() => handleOwnerAction(isOwner, () => setAddCategoryModalOpen(true), "Добавлять категории может только владелец")}
-            refetchCategories={refetchCategories}
             isOwner={isOwner}
           />
         )}

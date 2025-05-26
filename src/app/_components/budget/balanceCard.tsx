@@ -4,19 +4,19 @@ import { api } from '~/trpc/react';
 import { toast } from 'react-hot-toast';
 
 interface BalanceCardProps {
-  balance: number;
-  expense: number;
-  isFlipped: boolean;
-  setIsFlipped: (flipped: boolean) => void;
-  budgetId: string;
+  balance: number;          // Текущий баланс бюджета
+  expense: number;          // Потраченная сумма
+  isFlipped: boolean;       // Показывает ли тыльную сторону
+  setIsFlipped: (flipped: boolean) => void; // Функция для переворота карточки
+  budgetId: string;         // ID бюджета, необходимый для API-запросов
 }
 
 export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped, budgetId }: BalanceCardProps) {
-  const [amount, setAmount] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [amount, setAmount] = useState<string>(''); // Введенная сумма
+  const [isLoading, setIsLoading] = useState<boolean>(false); // Флаг загрузки (для updateBalance и decreaseBalance)
 
-  const updateBalance = api.budget.updateBudgetBalance.useMutation();
-  const decreaseBalance = api.budget.decreaseBudgetBalance.useMutation();
+  const updateBalance = api.budget.updateBudgetBalance.useMutation(); // пополнение
+  const decreaseBalance = api.budget.decreaseBudgetBalance.useMutation(); // снятие
   const utils = api.useUtils();
 
   const handleSubmit = (type: "add" | "subtract") => {
@@ -40,7 +40,7 @@ export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped,
       decreaseBalance.mutate({ budgetId, amount: parsedAmount }, {
         onSuccess: (data) => {
           setIsLoading(false);
-          if (data?.error) {
+          if (data?.error) { // если недостаточно средств
             toast.error(data.error);
             return;
           }
@@ -58,11 +58,12 @@ export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped,
   };
 
   const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation();  // предотвращает переворот при клике на инпут
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    //  разрешаем только числа и десятичную точку (^ — начало строки \d* — любое количество цифр \.? — 0 или 1 точка\d* — ещё цифры $ — конец строки)
     if (/^\d*\.?\d*$/.test(value)) {
       setAmount(value);
     }

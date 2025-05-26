@@ -8,6 +8,7 @@ interface IncomeExpenseCardProps {
 }
 
 export function IncomeExpenseCard({ income, expense, isFlipped, setIsFlipped }: IncomeExpenseCardProps) {
+  // это для линий внизу карточки
   const total = income + expense || 1;
   const incomePercentage = (income / total) * 100;
   const expensePercentage = (expense / total) * 100;

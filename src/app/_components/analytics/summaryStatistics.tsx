@@ -1,16 +1,16 @@
 import React from 'react';
 
 interface SummaryStatisticsProps {
-  averageExpenses: number;
-  largestExpenses: number;
-  incomeExpenseRatio: number;
+  averageExpenses: number; // Среднее значение всех расходов
+  largestExpenses: number; // Самая большая отдельная трата
+  incomeExpenseRatio: number; // Соотношение доходов к расходам 
 }
 
 export default function SummaryStatistics ({ averageExpenses, largestExpenses, incomeExpenseRatio }: SummaryStatisticsProps) {
   if (averageExpenses === undefined || largestExpenses === undefined || incomeExpenseRatio === undefined) {
     return <div className="text-gray-500 italic">Нет сводной статистики для отображения.</div>;
   }
-
+//  форматируем в валюту
   const formattedAverageExpenses = averageExpenses.toLocaleString('ru-RU', {
     style: 'currency',
     currency: 'RUB',

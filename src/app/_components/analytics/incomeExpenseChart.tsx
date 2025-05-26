@@ -20,12 +20,18 @@ export default function IncomeExpenseChart ({ data }: IncomeExpenseProps) {
       <h2 className="text-xl font-bold text-gray-700">
         Динамика доходов и расходов
       </h2>
-      <ResponsiveContainer width="95%" height={400}>
+      {/* Делает график адаптивным */}
+      <ResponsiveContainer width="95%" height={400}> 
+        {/* контейнер самого графика */}
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
+          {/* сетка на заднем фоне */}
+          <CartesianGrid strokeDasharray="3 3" /> 
+          {/* оси */}
+          <XAxis dataKey="date" /> 
           <YAxis />
+          {/* подсказдка */}
           <Tooltip />
+          {/* Легенда */}
           <Legend />
           <Line
             type="monotone"
