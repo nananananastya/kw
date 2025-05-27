@@ -21,7 +21,7 @@ export default function SummaryStatistics ({ averageExpenses, largestExpenses, i
     currency: 'RUB',
     minimumFractionDigits: 0,
   });
-  const formattedIncomeExpenseRatio = (incomeExpenseRatio * 100).toFixed(2) + '%'; 
+  const formattedIncomeExpenseRatio = (incomeExpenseRatio * 100).toFixed(2) + '%';  // преобразуем в проценты
 
   return (
     <div className="container mx-auto b bg-gradient-to-r from-pink-500 to-purple-500 p-6 rounded-xl shadow-xl flex flex-col justify-center items-center transition-transform transform hover:scale-105 ease-in-out">

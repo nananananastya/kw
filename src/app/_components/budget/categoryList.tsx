@@ -13,7 +13,7 @@ interface CategoryListProps {
 
 export function CategoryList({ budgetId, setAddCategoryModalOpen, isOwner}: CategoryListProps) {
   // Получаем категории
-  const { data: categories = [], isLoading, error, refetch } = api.category.getCategoriesWithExpenses.useQuery(budgetId);
+  const { data: categories = [], isLoading, error} = api.category.getCategoriesWithExpenses.useQuery(budgetId);
 
   // Управляют открытием/закрытием модалки и данными текущей редактируемой категории
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -47,7 +47,6 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, isOwner}: Cate
         toast.success(data.message);
         utils.category.getCategoriesWithExpenses.invalidate(budgetId);
         setIsEditModalOpen(false);
-
       }
     },
   });
@@ -120,8 +119,8 @@ export function CategoryList({ budgetId, setAddCategoryModalOpen, isOwner}: Cate
         }
         renderItem={(category) => {
           const spent = category.spent;
-          const progress = Math.min((spent / category.limit) * 100, 100);
-          const isOverLimit = spent > category.limit;
+          const progress = Math.min((spent / category.limit) * 100, 100); // заполенние прогресбара 
+          const isOverLimit = spent > category.limit; // чтобы красным было
           const progressColor = 'bg-pink-500';
 
           return (

@@ -6,11 +6,10 @@ import { api } from '~/trpc/react';
 interface CategoryProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (name: string, limit: number, budgetId: string) => void;
   budgetId: string;
 }
 
-export function AddCategoryModal ({ isOpen, onClose, onAdd, budgetId }: CategoryProps) {
+export function AddCategoryModal ({ isOpen, onClose, budgetId }: CategoryProps) {
   const utils = api.useUtils(); 
 
   const createCategory = api.category.addCategoryToBudget.useMutation({

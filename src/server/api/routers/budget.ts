@@ -154,29 +154,17 @@ export const budgetRouter = createTRPCRouter({
     return { balance: balance?.amount ?? 0, income, expense };
   }),
 
-  // Пополнение бюджета
-  updateBudgetBalance: protectedProcedure
-    .input(z.object({ budgetId: z.string(), amount: z.number().positive() }))
+// Обновление баланса бюджета 
+  changeBudgetBalance: protectedProcedure
+    .input(
+      z.object({
+        budgetId: z.string(),
+        amount: z.number().positive(),
+        type: z.enum(["add", "subtract"]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-      const { budgetId, amount } = input;
-
-      const budget = await ctx.db.budget.update({
-        where: { id: budgetId },
-        data: {
-          amount: {
-            increment: amount,
-          },
-        },
-      });
-
-      return budget;
-    }),
-  
-  // Снятие средств с бюджета
-  decreaseBudgetBalance: protectedProcedure
-    .input(z.object({ budgetId: z.string(), amount: z.number().positive() }))
-    .mutation(async ({ ctx, input }) => {
-      const { budgetId, amount } = input;
+      const { budgetId, amount, type } = input;
 
       const budget = await ctx.db.budget.findUnique({
         where: { id: budgetId },
@@ -186,24 +174,31 @@ export const budgetRouter = createTRPCRouter({
         return { error: "Бюджет не найден" };
       }
 
-      if (budget.amount === null || budget.amount < amount) {
-        return { error: "Недостаточно средств в бюджете" };
+      if (type === "subtract") {
+        if (budget.amount === null || budget.amount < amount) {
+          return { error: "Недостаточно средств в бюджете" };
+        }
       }
 
       const updatedBudget = await ctx.db.budget.update({
         where: { id: budgetId },
         data: {
           amount: {
-            decrement: amount,
+            [type === "add" ? "increment" : "decrement"]: amount,
           },
         },
       });
 
       return {
-        message: "Баланс успешно обновлён",
+        message:
+          type === "add"
+            ? "Бюджет успешно пополнен"
+            : "Средства успешно списаны",
         budget: updatedBudget,
       };
     }),
+
+    
 
   // Получение участников бюджета
   getBudgetMembers: protectedProcedure

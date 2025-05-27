@@ -49,7 +49,6 @@ describe('AddBudgetModal', () => {
       <AddBudgetModal
         isOpen={true}
         onClose={onClose}
-        onAddGroup={onAddGroup}
       />
     );
     expect(screen.getByPlaceholderText('Например: Учёба')).toBeDefined();
@@ -62,7 +61,6 @@ describe('AddBudgetModal', () => {
       <AddBudgetModal
         isOpen={true}
         onClose={onClose}
-        onAddGroup={onAddGroup}
       />
     );
 

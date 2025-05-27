@@ -7,7 +7,6 @@ import React from 'react';
 interface AddBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddGroup: (groupId: string, groupName: string) => void;
 }
 
 export function AddBudgetModal ({ isOpen, onClose }: AddBudgetModalProps) {

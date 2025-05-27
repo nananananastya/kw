@@ -15,8 +15,7 @@ export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped,
   const [amount, setAmount] = useState<string>(''); // Введенная сумма
   const [isLoading, setIsLoading] = useState<boolean>(false); // Флаг загрузки (для updateBalance и decreaseBalance)
 
-  const updateBalance = api.budget.updateBudgetBalance.useMutation(); // пополнение
-  const decreaseBalance = api.budget.decreaseBudgetBalance.useMutation(); // снятие
+  const changeBalance = api.budget.changeBudgetBalance.useMutation()
   const utils = api.useUtils();
 
   const handleSubmit = (type: "add" | "subtract") => {
@@ -26,35 +25,29 @@ export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped,
 
     setIsLoading(true);
 
-    if (type === "add") {
-      updateBalance.mutate({ budgetId, amount: parsedAmount }, {
-        onSuccess: () => {
-          setIsFlipped(false);
-          setIsLoading(false);
-          setAmount('');
-          utils.budget.getBudgetSummary.invalidate({ budgetId });
-        },
-        onError: () => setIsLoading(false),
-      });
-    } else {
-      decreaseBalance.mutate({ budgetId, amount: parsedAmount }, {
+    changeBalance.mutate({ budgetId, amount: parsedAmount, type },
+      {
         onSuccess: (data) => {
           setIsLoading(false);
-          if (data?.error) { // если недостаточно средств
+
+          if (data?.error) {
             toast.error(data.error);
             return;
           }
           setIsFlipped(false);
           setAmount('');
-          toast.success("Средства успешно сняты");
+          
+          if (data.message) {
+            toast.success(data.message);
+          }
           utils.budget.getBudgetSummary.invalidate({ budgetId });
         },
         onError: () => {
           setIsLoading(false);
-          toast.error("Произошла ошибка при списании средств");
+          toast.error("Произошла ошибка при обновлении баланса");
         },
-      });
-    }
+      }
+    );
   };
 
   const handleInputClick = (e: React.MouseEvent) => {

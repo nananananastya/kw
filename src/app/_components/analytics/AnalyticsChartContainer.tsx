@@ -24,7 +24,6 @@ export default function AnalyticsChartContainer() {
       startDate,
       endDate,
     },
-    { enabled: !!selectedBudgetId }
   );
 
 // для линейного графика
@@ -35,7 +34,6 @@ export default function AnalyticsChartContainer() {
       startDate,
       endDate,
     },
-    { enabled: !!selectedBudgetId }
   );
 
   // для выбора первого бюджета

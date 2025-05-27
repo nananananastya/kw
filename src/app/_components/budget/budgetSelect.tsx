@@ -42,23 +42,6 @@ export default function BudgetSelect() {
     },
   });
 
-  const utils = api.useUtils(); // позволяют управлять кэшом данных
-
-  const { mutateAsync: addCategory } = api.category.addCategoryToBudget.useMutation({
-    onSuccess: () => {
-      // обновляем кэш категорий у текущей группы, чтобы интерфейс сразу показал новую категорию без перезагрузки
-      if (selectedGroupId) {
-        utils.category.getCategoriesWithExpenses.invalidate(selectedGroupId);
-      }
-    },
-  });
-
-  const handleAddCategory = async (name: string, limit: number, budgetId: string) => {
-    await addCategory({ name, limit, budgetId });
-    // принуждает перезапросить свежие данные с сервера, тк кэш утсрел после добавления новой категории
-    utils.category.getCategoriesWithExpenses.invalidate(budgetId);
-  };
-
   const handleOwnerAction = (isOwner: boolean, action: () => void, errorMessage: string) => {
     if (!isOwner) {
       toast.error(errorMessage);
@@ -165,15 +148,11 @@ export default function BudgetSelect() {
         <AddBudgetModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onAddGroup={(id, name) => {
-            console.log("Добавлена группа:", id, name);
-          }}
         />
 
         <AddCategoryModal
           isOpen={isAddCategoryModalOpen}
           onClose={() => setAddCategoryModalOpen(false)}
-          onAdd={handleAddCategory}
           budgetId={selectedGroupId!}
         />
         <BudgetMembersModal
