@@ -10,7 +10,7 @@ export default async function TransactionPage() {
     <>
       <Header title={"Транзакции"} />
       <AddTransactionForm />
-      <TransactionList />
+      {/* <TransactionList /> */}
     </>
   );
 }

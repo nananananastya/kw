@@ -47,27 +47,30 @@ test.describe('Страница аналитики', () => {
     await expect(authedPage.getByText('Доходы/Расходы')).toBeVisible();
   });
 
-  test('отображение и переключение графика категорий', async ({ authedPage }) => {
-    console.log('Открываю вкладку "Столбчатая"');
-    await authedPage.getByRole('button', { name: 'Столбчатая' }).click();
-  
-    const barChart = authedPage.locator('svg'); // можно уточнить: authedPage.locator('[data-testid="category-chart"] svg')
-    await barChart.first().waitFor({ state: 'visible', timeout: 10000 });
-  
-    const countBar = await barChart.count();
-    console.log('SVG найдено после столбчатой:', countBar);
-    expect(countBar).toBeGreaterThan(0); // хотя бы 1
-  
-    console.log('Открываю вкладку "Круговая"');
-    await authedPage.getByRole('button', { name: 'Круговая' }).click();
-  
-    const pieChart = authedPage.locator('svg');
-    await pieChart.first().waitFor({ state: 'visible', timeout: 10000 });
-  
-    const countPie = await pieChart.count();
-    console.log('SVG найдено после круговой:', countPie);
-    expect(countPie).toBeGreaterThan(0);
-  });
+test('отображение и переключение графика категорий', async ({ authedPage }) => {
+  console.log('Открываю вкладку "Столбчатая"');
+  // Кликаем по первой найденной кнопке "Столбчатая"
+  await authedPage.getByRole('button', { name: 'Столбчатая' }).first().click();
+
+  const barChart = authedPage.locator('svg');
+  await barChart.first().waitFor({ state: 'visible', timeout: 10000 });
+
+  const countBar = await barChart.count();
+  console.log('SVG найдено после столбчатой:', countBar);
+  expect(countBar).toBeGreaterThan(0); // хотя бы 1
+
+  console.log('Открываю вкладку "Круговая"');
+  // Кликаем по второй кнопке "Круговая", если дубликаты тоже есть
+  await authedPage.getByRole('button', { name: 'Круговая' }).first().click();
+
+  const pieChart = authedPage.locator('svg');
+  await pieChart.first().waitFor({ state: 'visible', timeout: 10000 });
+
+  const countPie = await pieChart.count();
+  console.log('SVG найдено после круговой:', countPie);
+  expect(countPie).toBeGreaterThan(0);
+});
+
   
   test('работает селектор бюджета и периода', async ({ authedPage }) => {
     const budgetSelect = authedPage.locator('select#budget');

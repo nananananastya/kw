@@ -7,15 +7,16 @@ interface CategoryProps {
   isOpen: boolean;
   onClose: () => void;
   budgetId: string;
+  type: 'INCOME' | 'EXPENSE';
 }
 
-export function AddCategoryModal ({ isOpen, onClose, budgetId }: CategoryProps) {
-  const utils = api.useUtils(); 
+export function AddCategoryModal({ isOpen, onClose, budgetId, type }: CategoryProps) {
+  const utils = api.useUtils();
 
   const createCategory = api.category.addCategoryToBudget.useMutation({
     onSuccess: async () => {
-      await utils.category.getCategoriesWithExpenses.invalidate(budgetId);
-      onClose(); 
+      await utils.category.getCategoriesByBudgetAndType.invalidate();
+      onClose();
     },
   });
 
@@ -23,13 +24,17 @@ export function AddCategoryModal ({ isOpen, onClose, budgetId }: CategoryProps) 
     <AddEntityModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Добавить категорию"
+      title={`Добавить ${type === 'INCOME' ? 'доход' : 'расход'}`}
       fields={[
-        { name: 'name', label: 'Название', type: 'text', placeholder: 'Например: Развлечения' },
-        { name: 'limit', label: 'Лимит (₽)', type: 'number', placeholder: '00.00' },
+        { name: 'name', label: 'Название', type: 'text', placeholder: 'Например: Зарплата' },
+        { 
+          name: 'limit', 
+          label: type === 'INCOME' ? 'Ожидание' : 'Лимит (₽)', 
+          type: 'number', 
+          placeholder: '00.00' 
+        },
       ]}
       onSubmit={(values) => {
-        // вытаскиваем данные из полей и передаем в мутацию
         const name = values.name!.trim();
         const limit = parseFloat(values.limit!);
 
@@ -38,9 +43,10 @@ export function AddCategoryModal ({ isOpen, onClose, budgetId }: CategoryProps) 
             name,
             limit,
             budgetId,
+            type,
           });
         }
       }}
     />
   );
-};
+}

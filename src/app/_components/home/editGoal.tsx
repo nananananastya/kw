@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EditModalWrapper } from './baseEdit';
+import { EditModalWrapper } from '../budget/baseEdit';
 import { DateField } from '../dateField';
 
 interface EditGoalModalProps {

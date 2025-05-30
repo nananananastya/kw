@@ -5,6 +5,8 @@ import { EditModalWrapper } from "./baseEdit";
 import { Category } from "@prisma/client";
 import React from 'react';
 
+
+
 interface EditCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -52,16 +54,17 @@ export default function EditCategoryModal ({ isOpen, onClose, category, onSave, 
         />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Лимит</label>
-        <input
-          type="number"
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-          value={limit}
-          onChange={(e) => setLimit(Number(e.target.value))}
-          //  поля не должны быть пустыми
-          required 
-        />
-      </div>
+      <label className="block text-sm font-medium text-gray-700">
+        {category.type === 'INCOME' ? 'Ожидание' : 'Лимит'}
+      </label>
+      <input
+        type="number"
+        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+        value={limit}
+        onChange={(e) => setLimit(Number(e.target.value))}
+        required
+      />
+    </div>
     </EditModalWrapper>
   );
 };

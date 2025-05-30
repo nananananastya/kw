@@ -25,7 +25,7 @@ export default function SummaryStatistics ({ averageExpenses, largestExpenses, i
 
   return (
     <div className="container mx-auto b bg-gradient-to-r from-pink-500 to-purple-500 p-6 rounded-xl shadow-xl flex flex-col justify-center items-center transition-transform transform hover:scale-105 ease-in-out">
-      <h2 className="text-2xl font-bold text-white mb-4">Сводная статистика</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">Сводная статистика за последний месяц</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
         <div className="flex flex-col items-center justify-center rounded-lg p-4">

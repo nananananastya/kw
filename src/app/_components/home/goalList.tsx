@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { GoPlus } from 'react-icons/go';
 import { TbPigMoney } from "react-icons/tb";
 import { api } from '~/trpc/react';
-import ItemList from './itemList';
+import ItemList from '../budget/itemList';
 import EditGoalModal from './editGoal';
 import { AddGoalModal } from './addGoal';
 import AddMoneyToGoalModal from './addMoneyGoal';

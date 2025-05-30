@@ -2,6 +2,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 import { requireBudgetOwner } from '~/server/utils/checkRole';
 import { startOfWeek, endOfWeek } from 'date-fns';
+import { CategoryType } from "@prisma/client";
 
 export const budgetRouter = createTRPCRouter({
   // Получение всех бюджетов, связанных с пользователем
@@ -126,33 +127,40 @@ export const budgetRouter = createTRPCRouter({
   }),
 
     
-  // Получение баланса, доходов и расходов по бюджету
+// Получение баланса, доходов и расходов по бюджету
   getBudgetSummary: protectedProcedure
-  .input(z.object({ budgetId: z.string() }))
-  .query(async ({ ctx, input }) => {
-    const { budgetId } = input;
+    .input(z.object({ budgetId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { budgetId } = input;
 
-    const transactions = await ctx.db.transaction.findMany({
-      where: {
-        budgetId,
-      },
-    });
+      // Забираем все транзакции вместе с категорией
+      const transactions = await ctx.db.transaction.findMany({
+        where: { budgetId },
+        include: { category: true },
+      });
 
-    const income = transactions
-      .filter((t) => t.type === "INCOME")
-      .reduce((sum, t) => sum + t.amount, 0);
+      // Считаем доходы
+      const income = transactions
+        .filter((t) => t.category.type === CategoryType.INCOME)
+        .reduce((sum, t) => sum + t.amount, 0);
 
-    const expense = transactions
-      .filter((t) => t.type === "EXPENSE")
-      .reduce((sum, t) => sum + t.amount, 0);
+      // Считаем расходы
+      const expense = transactions
+        .filter((t) => t.category.type === CategoryType.EXPENSE)
+        .reduce((sum, t) => sum + t.amount, 0);
 
-    const balance = await ctx.db.budget.findUnique({
-      where: { id: budgetId },
-      select: { amount: true },
-    });
+      // Текущий баланс храним в самой таблице Budget.amount
+      const budget = await ctx.db.budget.findUnique({
+        where: { id: budgetId },
+        select: { amount: true },
+      });
 
-    return { balance: balance?.amount ?? 0, income, expense };
-  }),
+      return {
+        balance: budget?.amount ?? 0,
+        income,
+        expense,
+      };
+    }),
 
 // Обновление баланса бюджета 
   changeBudgetBalance: protectedProcedure
@@ -269,5 +277,4 @@ export const budgetRouter = createTRPCRouter({
           totalExpenses,
         };
       }),   
-
 });

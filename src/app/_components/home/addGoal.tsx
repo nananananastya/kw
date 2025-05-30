@@ -1,6 +1,6 @@
 'use client';
 
-import { AddEntityModal } from './baseAdd'; 
+import { AddEntityModal } from '../budget/baseAdd'; 
 
 type GoalFormData = {
   name: string;

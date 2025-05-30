@@ -15,34 +15,97 @@ export const categoryRouter = createTRPCRouter({
       });
     }),
 
+  getCategoriesByBudgetAndType: protectedProcedure
+    .input(z.object({
+  budgetId: z.string(),
+  type: z.enum(['INCOME', 'EXPENSE']),
+  page: z.number().min(1).optional().default(1),
+  size: z.number().min(1).max(100).optional().default(10),
+}))
+.query(async ({ ctx, input }) => {
+  const skip = (input.page - 1) * input.size;
+  const take = input.size;
+
+  // Сначала считаем общее кол-во категорий для пагинации
+  const total = await ctx.db.category.count({
+    where: {
+      budgetId: input.budgetId,
+      type: input.type,
+    },
+  });
+
+  // Получаем категории с лимитом и пропуском
+  const categories = await ctx.db.category.findMany({
+    where: {
+      budgetId: input.budgetId,
+      type: input.type,
+    },
+    skip,
+    take,
+    select: {
+      id: true,
+      name: true,
+      limit: true,
+      type: true,
+      budgetId: true,
+    },
+  });
+
+  // Группировка spent как было
+  const spentData = await ctx.db.transaction.groupBy({
+    by: ['categoryId'],
+    where: {
+      categoryId: { in: categories.map(c => c.id) },
+    },
+    _sum: { amount: true },
+  });
+
+  const categoriesWithSpent = categories.map(category => {
+    const spentEntry = spentData.find(s => s.categoryId === category.id);
+    return {
+      ...category,
+      spent: spentEntry?._sum.amount ?? 0,
+    };
+  });
+
+  return {
+    categories: categoriesWithSpent,
+    total,
+  };
+}),
+
+
     // Добавление новой категории в бюджет
-    addCategoryToBudget: protectedProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        limit: z.number(),
-        budgetId: z.string(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { name, limit, budgetId } = input;
-  
-      await requireBudgetOwner({
-        db: ctx.db,
-        userId: ctx.session.user.id,
+addCategoryToBudget: protectedProcedure
+  .input(
+    z.object({
+      name: z.string(),
+      limit: z.number(),
+      budgetId: z.string(),
+      type: z.enum(['INCOME', 'EXPENSE']),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { name, limit, budgetId, type } = input;
+
+    await requireBudgetOwner({
+      db: ctx.db,
+      userId: ctx.session.user.id,
+      budgetId,
+    });
+
+    const category = await ctx.db.category.create({
+      data: {
+        name,
+        limit,
         budgetId,
-      });
-  
-      const category = await ctx.db.category.create({
-        data: {
-          name,
-          limit,
-          budgetId,
-        },
-      });
-  
-      return category;
-    }),
+        type,
+      },
+    });
+
+    return category;
+  }),
+
 
     // Редактирование категории
     updateCategory: protectedProcedure
@@ -114,35 +177,5 @@ export const categoryRouter = createTRPCRouter({
     }
     }),
 
-    // Получение категорий с расходами
-    getCategoriesWithExpenses: protectedProcedure
-    .input(z.string()) // budgetId
-    .query(async ({ ctx, input: budgetId }) => {
-      const startDate = startOfMonth(new Date());
-  
-      const categories = await ctx.db.category.findMany({
-        where: { budgetId },
-        include: {
-          transactions: {
-            where: {
-              type: 'EXPENSE',
-              date: {
-                gte: startDate, 
-              },
-            },
-          },
-        },
-      });
-  
-      return categories.map((category) => {
-        const spent = category.transactions?.reduce((sum, tx) => sum + tx.amount, 0) || 0;
-        return {
-          id: category.id,
-          name: category.name,
-          limit: category.limit,
-          spent,
-          budgetId: category.budgetId,
-        };
-      });
-    }),
+
 });

@@ -6,9 +6,10 @@ import ChartButton from './chartButton';
 
 interface AnalyticsChartProps {
   categoryData: { category: string; value: number }[];
+  title: string;
 }
 
-export default function AnalyticsChart({ categoryData }: AnalyticsChartProps) {
+export default function AnalyticsChart({ categoryData, title }: AnalyticsChartProps) {
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie'); // тип выбранного графика
 
   const COLORS = [
@@ -23,7 +24,7 @@ export default function AnalyticsChart({ categoryData }: AnalyticsChartProps) {
   return (
     <div className="h-80">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-700">Распределение расходов по категориям</h2>
+        <h2 className="text-xl font-bold text-gray-700">{title}</h2>
         <div className="flex gap-4 justify-end">
           <ChartButton
             type="pie"

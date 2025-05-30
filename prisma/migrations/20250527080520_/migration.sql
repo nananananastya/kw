@@ -4,6 +4,9 @@ CREATE TYPE "TransactionType" AS ENUM ('INCOME', 'EXPENSE');
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('OWNER', 'MEMBER');
 
+-- CreateEnum
+CREATE TYPE "CategoryType" AS ENUM ('INCOME', 'EXPENSE');
+
 -- CreateTable
 CREATE TABLE "Account" (
     "id" TEXT NOT NULL,
@@ -75,6 +78,7 @@ CREATE TABLE "Category" (
     "name" TEXT NOT NULL,
     "limit" DOUBLE PRECISION NOT NULL,
     "budgetId" TEXT NOT NULL,
+    "type" "CategoryType" NOT NULL,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
