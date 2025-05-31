@@ -1,7 +1,11 @@
+'use client'
+
 import { useEffect, useState } from "react";
 import { EditModalWrapper } from "./baseEdit"; 
 import { Category } from "@prisma/client";
 import React from 'react';
+
+
 
 interface EditCategoryModalProps {
   isOpen: boolean;
@@ -12,16 +16,18 @@ interface EditCategoryModalProps {
 }
 
 export default function EditCategoryModal ({ isOpen, onClose, category, onSave, onDelete }: EditCategoryModalProps) {
+  // локальные состояния для изменяемых значений
   const [name, setName] = useState(category.name);
   const [limit, setLimit] = useState(category.limit);
 
+  // для того чтобы при открытии нескольких категорий вподряд 
   useEffect(() => {
     setName(category.name);
     setLimit(category.limit);
   }, [category]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // блокировка перезагрузки страницы 
     onSave(category.id, name, limit);
     onClose(); 
   };
@@ -48,15 +54,17 @@ export default function EditCategoryModal ({ isOpen, onClose, category, onSave, 
         />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Лимит</label>
-        <input
-          type="number"
-          className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-          value={limit}
-          onChange={(e) => setLimit(Number(e.target.value))}
-          required
-        />
-      </div>
+      <label className="block text-sm font-medium text-gray-700">
+        {category.type === 'INCOME' ? 'Ожидание' : 'Лимит'}
+      </label>
+      <input
+        type="number"
+        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+        value={limit}
+        onChange={(e) => setLimit(Number(e.target.value))}
+        required
+      />
+    </div>
     </EditModalWrapper>
   );
 };

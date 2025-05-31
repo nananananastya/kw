@@ -7,14 +7,13 @@ import React from 'react';
 interface AddBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddGroup: (groupId: string, groupName: string) => void;
 }
 
 export function AddBudgetModal ({ isOpen, onClose }: AddBudgetModalProps) {
   const utils = api.useUtils();
   const createBudget = api.budget.create.useMutation({
     onSuccess: async () => {
-      await utils.budget.getUserBudgets.invalidate();
+      await utils.budget.getUserBudgets.invalidate(); // инвалидация trpc из-за того что данные устарели 
       onClose();
     },
   });
@@ -29,6 +28,7 @@ export function AddBudgetModal ({ isOpen, onClose }: AddBudgetModalProps) {
         { name: 'budgetAmount', label: 'Сумма бюджета', type: 'number', placeholder: 'Введите сумму' },
       ]}
       onSubmit={(values) => {
+        // достаем поля и передаем их в мутацию
         const groupName = values.groupName ?? '';
         const budgetAmount = parseFloat(values.budgetAmount ?? '0');
 

@@ -9,12 +9,19 @@ import { generatePagination } from '../../lib/utils';
 export default function Pagination({
   totalPages,
   onPageChange,
+  pageParam,
+  currentPage: externalPage,
 }: {
   totalPages: number;
   onPageChange: (page: number) => void;
+  pageParam?: string; // если есть — читаем из URL
+  currentPage?: number; // если pageParam нет — читаем напрямую
 }) {
-  const searchParams = useSearchParams();  
-  const currentPage = Number(searchParams.get('page')) || 1; // из URL берет текущую страницу
+
+  const searchParams = useSearchParams();
+  const currentPage = pageParam   // из URL берет текущую страницу
+    ? Number(searchParams.get(pageParam)) || 1
+    : externalPage || 1;
 
   const allPages = generatePagination(currentPage, totalPages);
 

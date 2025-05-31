@@ -2,11 +2,11 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
 import { requireBudgetOwner } from '~/server/utils/checkRole';
 import { startOfWeek, endOfWeek } from 'date-fns';
+import { CategoryType } from "@prisma/client";
 
 export const budgetRouter = createTRPCRouter({
   // Получение всех бюджетов, связанных с пользователем
-  getUserBudgets: protectedProcedure
-  .query(async ({ ctx }) => {
+  getUserBudgets: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
     const budgets = await ctx.db.budget.findMany({
@@ -32,11 +32,7 @@ export const budgetRouter = createTRPCRouter({
     
   // Создание бюджета, добавление в него текущего пользователя
   create: protectedProcedure
-    .input(
-      z.object({ 
-        name: z.string(), 
-        amount: z.number().optional() 
-      }))
+    .input(z.object({ name: z.string(), amount: z.number().optional() }))
     .mutation(async ({ input, ctx }) => {
       const budget = await ctx.db.budget.create({
         data: {
@@ -58,11 +54,7 @@ export const budgetRouter = createTRPCRouter({
 
   // Приглашение пользователя в бюджет
   inviteToBudget: protectedProcedure
-  .input(
-    z.object({ 
-      email: z.string(), 
-      budgetId: z.string() 
-    }))
+  .input(z.object({ email: z.string(), budgetId: z.string() }))
   .mutation(async ({ ctx, input }) => {
     const { email, budgetId } = input;
 
@@ -103,10 +95,7 @@ export const budgetRouter = createTRPCRouter({
 
   // Удаление бюджета
   deleteBudget: protectedProcedure
-  .input(
-    z.object({ 
-      budgetId: z.string() 
-    }))
+  .input(z.object({ budgetId: z.string() }))
   .mutation(async ({ ctx, input }) => {
     const { budgetId } = input;
 
@@ -138,68 +127,52 @@ export const budgetRouter = createTRPCRouter({
   }),
 
     
-  // Получение баланса, доходов и расходов по бюджету
+// Получение баланса, доходов и расходов по бюджету
   getBudgetSummary: protectedProcedure
-  .input(
-    z.object({ 
-      budgetId: z.string() 
-    }))
-  .query(async ({ ctx, input }) => {
-    const { budgetId } = input;
+    .input(z.object({ budgetId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { budgetId } = input;
 
-    const transactions = await ctx.db.transaction.findMany({
-      where: {
-        budgetId,
-      },
-    });
-
-    const income = transactions
-      .filter((t) => t.type === "INCOME")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const expense = transactions
-      .filter((t) => t.type === "EXPENSE")
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    const balance = await ctx.db.budget.findUnique({
-      where: { id: budgetId },
-      select: { amount: true },
-    });
-
-    return { balance: balance?.amount ?? 0, income, expense };
-  }),
-
-  // Пополнение бюджета
-  updateBudgetBalance: protectedProcedure
-    .input(
-      z.object({ 
-        budgetId: z.string(), 
-        amount: z.number().positive() 
-      }))
-    .mutation(async ({ ctx, input }) => {
-      const { budgetId, amount } = input;
-
-      const budget = await ctx.db.budget.update({
-        where: { id: budgetId },
-        data: {
-          amount: {
-            increment: amount,
-          },
-        },
+      // Забираем все транзакции вместе с категорией
+      const transactions = await ctx.db.transaction.findMany({
+        where: { budgetId },
+        include: { category: true },
       });
 
-      return budget;
+      // Считаем доходы
+      const income = transactions
+        .filter((t) => t.category.type === CategoryType.INCOME)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      // Считаем расходы
+      const expense = transactions
+        .filter((t) => t.category.type === CategoryType.EXPENSE)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      // Текущий баланс храним в самой таблице Budget.amount
+      const budget = await ctx.db.budget.findUnique({
+        where: { id: budgetId },
+        select: { amount: true },
+      });
+
+      return {
+        balance: budget?.amount ?? 0,
+        income,
+        expense,
+      };
     }),
-  
-  // Снятие средств с бюджета
-  decreaseBudgetBalance: protectedProcedure
+
+// Обновление баланса бюджета 
+  changeBudgetBalance: protectedProcedure
     .input(
-      z.object({ 
-        budgetId: z.string(), 
-        amount: z.number().positive() 
-      }))
+      z.object({
+        budgetId: z.string(),
+        amount: z.number().positive(),
+        type: z.enum(["add", "subtract"]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
-      const { budgetId, amount } = input;
+      const { budgetId, amount, type } = input;
 
       const budget = await ctx.db.budget.findUnique({
         where: { id: budgetId },
@@ -209,24 +182,31 @@ export const budgetRouter = createTRPCRouter({
         return { error: "Бюджет не найден" };
       }
 
-      if (budget.amount === null || budget.amount < amount) {
-        return { error: "Недостаточно средств в бюджете" };
+      if (type === "subtract") {
+        if (budget.amount === null || budget.amount < amount) {
+          return { error: "Недостаточно средств в бюджете" };
+        }
       }
 
       const updatedBudget = await ctx.db.budget.update({
         where: { id: budgetId },
         data: {
           amount: {
-            decrement: amount,
+            [type === "add" ? "increment" : "decrement"]: amount,
           },
         },
       });
 
       return {
-        message: "Баланс успешно обновлён",
+        message:
+          type === "add"
+            ? "Бюджет успешно пополнен"
+            : "Средства успешно списаны",
         budget: updatedBudget,
       };
     }),
+
+    
 
   // Получение участников бюджета
   getBudgetMembers: protectedProcedure
@@ -258,44 +238,43 @@ export const budgetRouter = createTRPCRouter({
   }),
 
   // Получение данных для карточек на домашней странице
-  summary: protectedProcedure
-  .query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-  
-    const budgets = await ctx.db.budgetUser.findMany({
-      where: { userId },
-      include: {
-        budget: {
+  summary: protectedProcedure.query(async ({ ctx }) => {
+        const userId = ctx.session.user.id;
+      
+        const budgets = await ctx.db.budgetUser.findMany({
+          where: { userId },
           include: {
-            transactions: true,
+            budget: {
+              include: {
+                transactions: true,
+              },
+            },
           },
-        },
-      },
-    });
-  
-    const now = new Date();
-    const start = startOfWeek(now, { weekStartsOn: 1 }); 
-    const end = endOfWeek(now, { weekStartsOn: 1 }); 
-  
-    let totalBalance = 0;
-    let totalIncome = 0;
-    let totalExpenses = 0;
-  
-    for (const { budget } of budgets) {
-      totalBalance += budget.amount ?? 0;
-  
-      for (const tx of budget.transactions) {
-        if (tx.date >= start && tx.date <= end) {
-          if (tx.type === 'INCOME') totalIncome += tx.amount;
-          else if (tx.type === 'EXPENSE') totalExpenses += tx.amount;
+        });
+      
+        const now = new Date();
+        const start = startOfWeek(now, { weekStartsOn: 1 }); 
+        const end = endOfWeek(now, { weekStartsOn: 1 }); 
+      
+        let totalBalance = 0;
+        let totalIncome = 0;
+        let totalExpenses = 0;
+      
+        for (const { budget } of budgets) {
+          totalBalance += budget.amount ?? 0;
+      
+          for (const tx of budget.transactions) {
+            if (tx.date >= start && tx.date <= end) {
+              if (tx.type === 'INCOME') totalIncome += tx.amount;
+              else if (tx.type === 'EXPENSE') totalExpenses += tx.amount;
+            }
+          }
         }
-      }
-    }
-  
-    return {
-      totalBalance,
-      totalIncome,
-      totalExpenses,
-    };
-  }),   
+      
+        return {
+          totalBalance,
+          totalIncome,
+          totalExpenses,
+        };
+      }),   
 });

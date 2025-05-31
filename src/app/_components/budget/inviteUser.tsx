@@ -12,13 +12,16 @@ interface InviteUserModalProps {
 }
 
 export function InviteUserModal ({ isOpen, onClose, onInvite, budgetId }: InviteUserModalProps) {
+
+  // для того, чтобы обновить участников после приглашения
   const { refetch } = api.budget.getBudgetMembers.useQuery(
     { budgetId },
-    { enabled: !!budgetId }
+    { enabled: !!budgetId } 
   );
 
   const inviteUser = api.budget.inviteToBudget.useMutation({
     onSuccess: (data) => {
+      // если участника нет в бд или т.п ошибки 
       if (data?.error) {
         toast.error(data.error);
         return;
@@ -31,6 +34,7 @@ export function InviteUserModal ({ isOpen, onClose, onInvite, budgetId }: Invite
       }
       refetch();
     },
+    // другие ошибки 
     onError: (error) => {
       const errorMessage =
         error?.message || 'Ошибка при добавлении пользователя';

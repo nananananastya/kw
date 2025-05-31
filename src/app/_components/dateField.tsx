@@ -17,9 +17,9 @@ export const DateField = ({ value, onChange, className = '', maxDate, onKeyDown 
   const [selectedDate, setSelectedDate] = useState<Date | null>(value);
 
   const handleChange = useCallback((date: Date | null) => {
-    setSelectedDate(date);
+    setSelectedDate(date);   // обновляем локальное состояние
     if (date) {
-      onChange(date);
+      onChange(date);   // уведомляем родителя, если дата выбрана
     }
   }, [onChange]);
 

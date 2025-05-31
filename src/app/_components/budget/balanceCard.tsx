@@ -4,19 +4,18 @@ import { api } from '~/trpc/react';
 import { toast } from 'react-hot-toast';
 
 interface BalanceCardProps {
-  balance: number;
-  expense: number;
-  isFlipped: boolean;
-  setIsFlipped: (flipped: boolean) => void;
-  budgetId: string;
+  balance: number;          // Текущий баланс бюджета
+  expense: number;          // Потраченная сумма
+  isFlipped: boolean;       // Показывает ли тыльную сторону
+  setIsFlipped: (flipped: boolean) => void; // Функция для переворота карточки
+  budgetId: string;         // ID бюджета, необходимый для API-запросов
 }
 
 export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped, budgetId }: BalanceCardProps) {
-  const [amount, setAmount] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [amount, setAmount] = useState<string>(''); // Введенная сумма
+  const [isLoading, setIsLoading] = useState<boolean>(false); // Флаг загрузки (для updateBalance и decreaseBalance)
 
-  const updateBalance = api.budget.updateBudgetBalance.useMutation();
-  const decreaseBalance = api.budget.decreaseBudgetBalance.useMutation();
+  const changeBalance = api.budget.changeBudgetBalance.useMutation()
   const utils = api.useUtils();
 
   const handleSubmit = (type: "add" | "subtract") => {
@@ -26,43 +25,38 @@ export default function BalanceCard({ balance, expense, isFlipped, setIsFlipped,
 
     setIsLoading(true);
 
-    if (type === "add") {
-      updateBalance.mutate({ budgetId, amount: parsedAmount }, {
-        onSuccess: () => {
-          setIsFlipped(false);
-          setIsLoading(false);
-          setAmount('');
-          utils.budget.getBudgetSummary.invalidate({ budgetId });
-        },
-        onError: () => setIsLoading(false),
-      });
-    } else {
-      decreaseBalance.mutate({ budgetId, amount: parsedAmount }, {
+    changeBalance.mutate({ budgetId, amount: parsedAmount, type },
+      {
         onSuccess: (data) => {
           setIsLoading(false);
+
           if (data?.error) {
             toast.error(data.error);
             return;
           }
           setIsFlipped(false);
           setAmount('');
-          toast.success("Средства успешно сняты");
+          
+          if (data.message) {
+            toast.success(data.message);
+          }
           utils.budget.getBudgetSummary.invalidate({ budgetId });
         },
         onError: () => {
           setIsLoading(false);
-          toast.error("Произошла ошибка при списании средств");
+          toast.error("Произошла ошибка при обновлении баланса");
         },
-      });
-    }
+      }
+    );
   };
 
   const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation();  // предотвращает переворот при клике на инпут
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    //  разрешаем только числа и десятичную точку (^ — начало строки \d* — любое количество цифр \.? — 0 или 1 точка\d* — ещё цифры $ — конец строки)
     if (/^\d*\.?\d*$/.test(value)) {
       setAmount(value);
     }

@@ -8,21 +8,22 @@ import { GoX } from 'react-icons/go';
 import React from 'react'; 
 
 interface AddEntityModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  fields: {
-    name: string;
-    label: string;
+  isOpen: boolean;  // открыта ли модалка 
+  onClose: () => void; // функция закрытия модалки
+  title: string;   // заголовок модалки 
+  fields: {    // описание полей формы
+    name: string; // имя поля 
+    label: string; // подпись над полем
     type: 'text' | 'number' | 'date';
-    placeholder?: string;
+    placeholder?: string;  
   }[];
-  onSubmit: (values: Record<string, string>) => void;
+  onSubmit: (values: Record<string, string>) => void;  // обработчик отправки формы
 }
 
 export function AddEntityModal ({ isOpen, onClose, title, fields, onSubmit }: AddEntityModalProps) {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({});  // значение полей в форме
 
+  // чтобы форма открывалась с пустыми полями
   useEffect(() => {
     if (isOpen) {
       const initialValues: Record<string, string> = {};
@@ -33,20 +34,21 @@ export function AddEntityModal ({ isOpen, onClose, title, fields, onSubmit }: Ad
     }
   }, [isOpen]);
 
+  // записываем значение заполненного поля 
   const handleChange = (name: string, value: string) => {
     setValues(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
-    if (fields.every(field => values[field.name]?.trim() !== '')) {
+    if (fields.every(field => values[field.name]?.trim() !== '')) { // проверка на заполненность полей
       onSubmit(values);
       onClose();
     }
   };
 
   return (
-    // relative z-50 чтобя модалка была выше родительского компонента
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+    // relative z-50 чтобы модалка была выше родительского компонента
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50"> 
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl relative">

@@ -6,17 +6,17 @@ import { api } from '~/trpc/react';
 interface CategoryProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (name: string, limit: number, budgetId: string) => void;
   budgetId: string;
+  type: 'INCOME' | 'EXPENSE';
 }
 
-export function AddCategoryModal ({ isOpen, onClose, onAdd, budgetId }: CategoryProps) {
-  const utils = api.useUtils(); 
+export function AddCategoryModal({ isOpen, onClose, budgetId, type }: CategoryProps) {
+  const utils = api.useUtils();
 
   const createCategory = api.category.addCategoryToBudget.useMutation({
     onSuccess: async () => {
-      await utils.category.getCategoriesWithExpenses.invalidate(budgetId);
-      onClose(); 
+      await utils.category.getCategoriesByBudgetAndType.invalidate();
+      onClose();
     },
   });
 
@@ -24,10 +24,15 @@ export function AddCategoryModal ({ isOpen, onClose, onAdd, budgetId }: Category
     <AddEntityModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Добавить категорию"
+      title={`Добавить ${type === 'INCOME' ? 'доход' : 'расход'}`}
       fields={[
-        { name: 'name', label: 'Название', type: 'text', placeholder: 'Например: Развлечения' },
-        { name: 'limit', label: 'Лимит (₽)', type: 'number', placeholder: '00.00' },
+        { name: 'name', label: 'Название', type: 'text', placeholder: 'Например: Зарплата' },
+        { 
+          name: 'limit', 
+          label: type === 'INCOME' ? 'Ожидание' : 'Лимит (₽)', 
+          type: 'number', 
+          placeholder: '00.00' 
+        },
       ]}
       onSubmit={(values) => {
         const name = values.name!.trim();
@@ -38,9 +43,10 @@ export function AddCategoryModal ({ isOpen, onClose, onAdd, budgetId }: Category
             name,
             limit,
             budgetId,
+            type,
           });
         }
       }}
     />
   );
-};
+}

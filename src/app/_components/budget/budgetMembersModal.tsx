@@ -14,9 +14,6 @@ interface MembersProps {
 export function BudgetMembersModal ({ isOpen, onClose, budgetId, isOwner }: MembersProps) {
   const { data: members = [], refetch } = api.budget.getBudgetMembers.useQuery(
     { budgetId: budgetId ?? '' },
-    {
-      enabled: !!budgetId,
-    }
   );
 
   const { mutate: removeUser } = api.budget.removeUserFromBudget.useMutation({

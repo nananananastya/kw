@@ -6,24 +6,25 @@ import ChartButton from './chartButton';
 
 interface AnalyticsChartProps {
   categoryData: { category: string; value: number }[];
+  title: string;
 }
 
-export default function AnalyticsChart({ categoryData }: AnalyticsChartProps) {
-  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+export default function AnalyticsChart({ categoryData, title }: AnalyticsChartProps) {
+  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie'); // тип выбранного графика
 
   const COLORS = [
     '#D84C9B', '#9B47B1', '#DA6DFF', '#8E2CB7', '#F06DA6',
     '#B25BCC', '#F4A6D7', '#BB66D4', '#E8A0FF', '#9A3E9C',
   ];
 
-  function handleChartTypeChange(type: 'pie' | 'bar') {
+  function handleChartTypeChange(type: 'pie' | 'bar') { // обработчик смены типа графика
     setChartType(type);
   }
 
   return (
     <div className="h-80">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-700">Распределение расходов по категориям</h2>
+        <h2 className="text-xl font-bold text-gray-700">{title}</h2>
         <div className="flex gap-4 justify-end">
           <ChartButton
             type="pie"
@@ -41,11 +42,13 @@ export default function AnalyticsChart({ categoryData }: AnalyticsChartProps) {
       </div>
 
       {chartType === 'pie' ? (
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+        // адаптивная ширина и высота (заполняет див)
+        <ResponsiveContainer width="100%" height="100%"> 
+        {/*  контейнер для круговой. */}
+          <PieChart> 
             <Pie data={categoryData} dataKey="value" nameKey="category" outerRadius={100} label>
               {categoryData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} /> // отдельный сегмент с цветом.
               ))}
             </Pie>
             <Tooltip />
@@ -56,12 +59,13 @@ export default function AnalyticsChart({ categoryData }: AnalyticsChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={categoryData}>
             <defs>
+              {/* создаем градиент для столбцов */}
               <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#F06DA6" stopOpacity={1} /> 
                 <stop offset="100%" stopColor="#9B47B1" stopOpacity={1} /> 
               </linearGradient>
             </defs>
-            
+            {/* оси графика */}
             <XAxis dataKey="category" />
             <YAxis />
             <Tooltip />
