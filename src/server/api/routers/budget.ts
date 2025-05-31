@@ -5,7 +5,8 @@ import { startOfWeek, endOfWeek } from 'date-fns';
 
 export const budgetRouter = createTRPCRouter({
   // Получение всех бюджетов, связанных с пользователем
-  getUserBudgets: protectedProcedure.query(async ({ ctx }) => {
+  getUserBudgets: protectedProcedure
+  .query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
     const budgets = await ctx.db.budget.findMany({
@@ -31,7 +32,11 @@ export const budgetRouter = createTRPCRouter({
     
   // Создание бюджета, добавление в него текущего пользователя
   create: protectedProcedure
-    .input(z.object({ name: z.string(), amount: z.number().optional() }))
+    .input(
+      z.object({ 
+        name: z.string(), 
+        amount: z.number().optional() 
+      }))
     .mutation(async ({ input, ctx }) => {
       const budget = await ctx.db.budget.create({
         data: {
@@ -53,7 +58,11 @@ export const budgetRouter = createTRPCRouter({
 
   // Приглашение пользователя в бюджет
   inviteToBudget: protectedProcedure
-  .input(z.object({ email: z.string(), budgetId: z.string() }))
+  .input(
+    z.object({ 
+      email: z.string(), 
+      budgetId: z.string() 
+    }))
   .mutation(async ({ ctx, input }) => {
     const { email, budgetId } = input;
 
@@ -94,7 +103,10 @@ export const budgetRouter = createTRPCRouter({
 
   // Удаление бюджета
   deleteBudget: protectedProcedure
-  .input(z.object({ budgetId: z.string() }))
+  .input(
+    z.object({ 
+      budgetId: z.string() 
+    }))
   .mutation(async ({ ctx, input }) => {
     const { budgetId } = input;
 
@@ -128,7 +140,10 @@ export const budgetRouter = createTRPCRouter({
     
   // Получение баланса, доходов и расходов по бюджету
   getBudgetSummary: protectedProcedure
-  .input(z.object({ budgetId: z.string() }))
+  .input(
+    z.object({ 
+      budgetId: z.string() 
+    }))
   .query(async ({ ctx, input }) => {
     const { budgetId } = input;
 
@@ -156,7 +171,11 @@ export const budgetRouter = createTRPCRouter({
 
   // Пополнение бюджета
   updateBudgetBalance: protectedProcedure
-    .input(z.object({ budgetId: z.string(), amount: z.number().positive() }))
+    .input(
+      z.object({ 
+        budgetId: z.string(), 
+        amount: z.number().positive() 
+      }))
     .mutation(async ({ ctx, input }) => {
       const { budgetId, amount } = input;
 
@@ -174,7 +193,11 @@ export const budgetRouter = createTRPCRouter({
   
   // Снятие средств с бюджета
   decreaseBudgetBalance: protectedProcedure
-    .input(z.object({ budgetId: z.string(), amount: z.number().positive() }))
+    .input(
+      z.object({ 
+        budgetId: z.string(), 
+        amount: z.number().positive() 
+      }))
     .mutation(async ({ ctx, input }) => {
       const { budgetId, amount } = input;
 
@@ -235,44 +258,44 @@ export const budgetRouter = createTRPCRouter({
   }),
 
   // Получение данных для карточек на домашней странице
-  summary: protectedProcedure.query(async ({ ctx }) => {
-        const userId = ctx.session.user.id;
-      
-        const budgets = await ctx.db.budgetUser.findMany({
-          where: { userId },
+  summary: protectedProcedure
+  .query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+  
+    const budgets = await ctx.db.budgetUser.findMany({
+      where: { userId },
+      include: {
+        budget: {
           include: {
-            budget: {
-              include: {
-                transactions: true,
-              },
-            },
+            transactions: true,
           },
-        });
-      
-        const now = new Date();
-        const start = startOfWeek(now, { weekStartsOn: 1 }); 
-        const end = endOfWeek(now, { weekStartsOn: 1 }); 
-      
-        let totalBalance = 0;
-        let totalIncome = 0;
-        let totalExpenses = 0;
-      
-        for (const { budget } of budgets) {
-          totalBalance += budget.amount ?? 0;
-      
-          for (const tx of budget.transactions) {
-            if (tx.date >= start && tx.date <= end) {
-              if (tx.type === 'INCOME') totalIncome += tx.amount;
-              else if (tx.type === 'EXPENSE') totalExpenses += tx.amount;
-            }
-          }
+        },
+      },
+    });
+  
+    const now = new Date();
+    const start = startOfWeek(now, { weekStartsOn: 1 }); 
+    const end = endOfWeek(now, { weekStartsOn: 1 }); 
+  
+    let totalBalance = 0;
+    let totalIncome = 0;
+    let totalExpenses = 0;
+  
+    for (const { budget } of budgets) {
+      totalBalance += budget.amount ?? 0;
+  
+      for (const tx of budget.transactions) {
+        if (tx.date >= start && tx.date <= end) {
+          if (tx.type === 'INCOME') totalIncome += tx.amount;
+          else if (tx.type === 'EXPENSE') totalExpenses += tx.amount;
         }
-      
-        return {
-          totalBalance,
-          totalIncome,
-          totalExpenses,
-        };
-      }),   
-
+      }
+    }
+  
+    return {
+      totalBalance,
+      totalIncome,
+      totalExpenses,
+    };
+  }),   
 });

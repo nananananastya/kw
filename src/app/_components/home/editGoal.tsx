@@ -1,17 +1,13 @@
 import { useEffect, useState } from 'react';
-import { EditModalWrapper } from './baseEdit';
+import { EditModalWrapper } from '../budget/baseEdit';
 import { DateField } from '../dateField';
+import { Goal } from "@prisma/client";
+import { Input } from '../input';
 
 interface EditGoalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  goal: {
-    id: string;
-    name: string;
-    targetAmount: number;
-    currentAmount: number;
-    targetDate: Date;
-  };
+  goal: Goal;
   onSave: (id: string, name: string, targetAmount: number, targetDate: Date) => void;
   onDelete: (id: string) => void;
 }
@@ -27,7 +23,7 @@ export default function EditGoalModal ({ isOpen, onClose, goal, onSave, onDelete
       setTargetAmount(goal.targetAmount);
       setTargetDate(goal.targetDate);
     }
-  }, [goal]);
+  }, [goal]); // новая цель - новые поля
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,20 +48,18 @@ export default function EditGoalModal ({ isOpen, onClose, goal, onSave, onDelete
     >
       <div className="mb-4">
         <label className="container mx-auto block text-sm font-medium text-gray-700">Название цели</label>
-        <input
+        <Input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
         />
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Целевая сумма</label>
-        <input
+        <Input
           type="number"
           value={targetAmount}
           onChange={(e) => setTargetAmount(Number(e.target.value))}
-          className="w-full p-2 border border-gray-300 rounded"
         />
       </div>
       <div className="mb-4">
@@ -73,11 +67,12 @@ export default function EditGoalModal ({ isOpen, onClose, goal, onSave, onDelete
         <DateField
           value={targetDate}
           onChange={(d) => {
-            if (d instanceof Date && !isNaN(d.getTime())) {
+            if (d instanceof Date) {
               setTargetDate(d);
             }
           }}
           className="w-full p-2 border border-gray-300 rounded"
+          onKeyDown={(e) => e.preventDefault()}
         />
       </div>
     </EditModalWrapper>

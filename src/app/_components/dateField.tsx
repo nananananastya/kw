@@ -8,13 +8,12 @@ import 'react-datepicker/dist/react-datepicker.css';
 interface DateFieldProps {
   value: Date | null;
   onChange: (date: Date) => void;
-  error?: string;
   className?: string;
   maxDate?: Date; 
-  disabled?: boolean; 
-}
+  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+} 
 
-export const DateField = ({ value, onChange, error, className = '', maxDate, disabled = false }: DateFieldProps) => {
+export const DateField = ({ value, onChange, className = '', maxDate, onKeyDown }: DateFieldProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(value);
 
   const handleChange = useCallback((date: Date | null) => {
@@ -31,10 +30,9 @@ export const DateField = ({ value, onChange, error, className = '', maxDate, dis
         onChange={handleChange}
         dateFormat="yyyy-MM-dd"
         className={className}
-        maxDate={maxDate}
-        disabled={disabled}  
+        maxDate={maxDate} 
+        onKeyDown={onKeyDown}
       />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };

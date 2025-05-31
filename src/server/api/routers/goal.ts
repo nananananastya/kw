@@ -3,7 +3,8 @@ import { z } from "zod";
 
 export const goalRouter = createTRPCRouter({
     // Получение всех целей пользователя
-    getUserGoals: protectedProcedure.query(async ({ ctx }) => {
+    getUserGoals: protectedProcedure
+    .query(async ({ ctx }) => {
     return ctx.db.goal.findMany({
         where: {
         userId: ctx.session.user.id,
@@ -23,13 +24,13 @@ export const goalRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
         const goal = await ctx.db.goal.create({
-        data: {
-            name: input.name,
-            targetAmount: input.targetAmount,
-            currentAmount: input.currentAmount ?? 0,
-            targetDate: input.targetDate,
-            userId: ctx.session.user.id,
-        },
+            data: {
+                name: input.name,
+                targetAmount: input.targetAmount,
+                currentAmount: input.currentAmount ?? 0,
+                targetDate: input.targetDate,
+                userId: ctx.session.user.id,
+            },
         });
 
         return goal;

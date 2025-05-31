@@ -13,8 +13,8 @@ export default function Pagination({
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
-  const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const searchParams = useSearchParams();  
+  const currentPage = Number(searchParams.get('page')) || 1; // из URL берет текущую страницу
 
   const allPages = generatePagination(currentPage, totalPages);
 

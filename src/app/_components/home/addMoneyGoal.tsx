@@ -24,10 +24,7 @@ export default function AddMoneyToGoalModal ({ goalId, isOpen, onClose }: AddMon
     onSuccess: () => {
       toast.success('Деньги успешно добавлены в цель');
       utils.goal.getUserGoals.invalidate();
-      if (selectedBudgetId) {
-        utils.budget.getBudgetSummary.invalidate({ budgetId: selectedBudgetId }); 
-      }
-      utils.budget.getUserBudgets.invalidate();
+      utils.budget.summary.invalidate();
       onClose();
     },
     onError: (error) => {
@@ -42,7 +39,7 @@ export default function AddMoneyToGoalModal ({ goalId, isOpen, onClose }: AddMon
     }
   };
 
-  const handleAddMoney = async () => {
+  const handleAddMoney = () => {
     const numericAmount = parseFloat(amount);
     if (!selectedBudgetId || isNaN(numericAmount) || numericAmount <= 0) {
       toast.error('Выберите бюджет и введите корректную сумму.');
@@ -61,12 +58,12 @@ export default function AddMoneyToGoalModal ({ goalId, isOpen, onClose }: AddMon
     }
 
     try {
-      await decreaseBudgetMutation.mutateAsync({
+      decreaseBudgetMutation.mutate({
         budgetId: selectedBudgetId,
         amount: numericAmount,
       });
 
-      await addMoneyMutation.mutateAsync({
+      addMoneyMutation.mutate({
         goalId,
         amountToAdd: numericAmount,
       });

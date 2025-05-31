@@ -10,9 +10,10 @@ interface CardProps {
   icon: React.ReactNode;
 }
 
-const Card = ({ title, value, icon }: CardProps ) => (
+function Card ({ title, value, icon }: CardProps ) {
+  return (
   <motion.div
-    whileHover={{ scale: 1.02 }}
+    whileHover={{ scale: 1.02 }}  // увеличивается при наведении
     className="flex items-center gap-4 p-5 rounded-2xl border border-gray-300 bg-white shadow-sm">
     <div className="text-gray-700 text-2xl">{icon}</div>
     <div>
@@ -20,7 +21,8 @@ const Card = ({ title, value, icon }: CardProps ) => (
       <p className="text-gray-900 text-xl font-semibold">{value.toLocaleString()} ₽</p>
     </div>
   </motion.div>
-);
+  )
+}
 
 export default function DashboardSummary() {
   const { data, isLoading } = api.budget.summary.useQuery();

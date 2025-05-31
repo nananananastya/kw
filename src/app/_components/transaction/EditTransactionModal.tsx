@@ -9,7 +9,7 @@ import { api } from '~/trpc/react';
 import { toast } from 'react-hot-toast';
 import React from 'react';
 
-interface TransactionFormData {
+export interface TransactionFormData {
   id: string;
   date: Date;
   description: string;
@@ -130,21 +130,19 @@ const { data: categories } = api.category.getCategoriesByBudget.useQuery({
       <div className="space-y-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">Пользователь</label>
-          <input
+          <Input
             type="text"
             value={formData.user?.email || 'Не указан'}
             readOnly
-            className="w-full border rounded p-2"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Бюджет</label>
-          <input
+          <Input
             type="text"
             value={formData.budget?.name || 'Не указан'}
             readOnly
-            className="w-full border rounded p-2"
           />
         </div>
 
@@ -208,6 +206,7 @@ const { data: categories } = api.category.getCategoriesByBudget.useQuery({
             }}
             className="w-full border p-2 rounded"
             maxDate={new Date()}
+            onKeyDown={(e) => e.preventDefault()}
           />
         </div>
       </div>

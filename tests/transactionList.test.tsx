@@ -28,10 +28,10 @@ describe('TransactionFilters', () => {
   ];
   
 
-  const mockBudgets = [
-    { id: 'b1', name: 'Основной бюджет' },
-    { id: 'b2', name: 'Путешествия' },
-  ];
+const mockBudgets = [
+  { id: 'b1', name: 'Основной бюджет', amount: 10000 },
+  { id: 'b2', name: 'Путешествия', amount: 50000 },
+];
 
   beforeEach(() => {
     render(

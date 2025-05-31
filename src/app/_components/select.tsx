@@ -5,11 +5,10 @@ interface SelectProps {
     onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     options: { label: string; value: string }[]; 
     id: string;
-    error?: string; 
     disabled?: boolean; 
 }
 
-export function Select ({ value, onChange, options, id, error, disabled }: SelectProps) {
+export function Select ({ value, onChange, options, id, disabled }: SelectProps) {
     return (
         <div className="relative">
             <select
@@ -19,12 +18,11 @@ export function Select ({ value, onChange, options, id, error, disabled }: Selec
                 onChange={onChange}
                 disabled={disabled} 
             >
-                <option value="" disabled hidden>Выберите</option> 
+                <option value="" disabled hidden>Выберите</option> // не может второй раз выбрать "Выберите"
                 {options.map((option, index) => (
                     <option key={index} value={option.value}>{option.label}</option>
                 ))}
             </select>
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
     );
 };

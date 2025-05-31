@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "TransactionType" AS ENUM ('INCOME', 'EXPENSE');
+CREATE TYPE "Role" AS ENUM ('OWNER', 'MEMBER');
 
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('OWNER', 'MEMBER');
+CREATE TYPE "CategoryType" AS ENUM ('INCOME', 'EXPENSE');
 
 -- CreateTable
 CREATE TABLE "Account" (
@@ -75,6 +75,7 @@ CREATE TABLE "Category" (
     "name" TEXT NOT NULL,
     "limit" DOUBLE PRECISION NOT NULL,
     "budgetId" TEXT NOT NULL,
+    "type" "CategoryType" NOT NULL,
 
     CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
@@ -97,7 +98,6 @@ CREATE TABLE "Transaction" (
     "amount" DOUBLE PRECISION NOT NULL,
     "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "description" TEXT,
-    "type" "TransactionType" NOT NULL,
     "categoryId" TEXT NOT NULL,
     "budgetId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,

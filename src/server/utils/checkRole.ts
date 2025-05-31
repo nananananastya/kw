@@ -34,7 +34,7 @@ export const canEditOrDeleteTransaction = async ({
 }) => {
   const transaction = await db.transaction.findUnique({
     where: { id: transactionId },
-    include: { budget: true },
+    include: { budget: true },  // получаем данные бюджета
   });
 
   if (!transaction) throw new Error("Транзакция не найдена");
@@ -51,12 +51,10 @@ export const canEditOrDeleteTransaction = async ({
   const isOwner = role.role === 'OWNER';
   const isAuthor = transaction.userId === userId;
 
-  // Генерация сообщений в зависимости от типа действия
   const permissionDeniedMessage = actionType === 'delete'
     ? "У вас нет прав на удаление этой транзакции"
     : "У вас нет прав на изменение этой транзакции";
 
-  // Проверяем права
   if (!isOwner && !isAuthor) {
     return { success: false, message: permissionDeniedMessage };
   }

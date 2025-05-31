@@ -9,11 +9,6 @@ import { TransactionType } from "@prisma/client";
 import { Button } from "../button";
 import { toast } from 'react-hot-toast';
 
-const transactionTypeLabels: Record<TransactionType, string> = {
-  INCOME: "Доход",
-  EXPENSE: "Расход",
-};
-
 export function AddTransactionForm() {
   const utils = api.useUtils(); 
 
@@ -118,10 +113,13 @@ export function AddTransactionForm() {
           <Select
             value={type}
             onChange={(e) => setType(e.target.value as TransactionType)}
-            options={Object.values(TransactionType).map((value) => ({
-              label: transactionTypeLabels[value],
-              value,
-            }))}
+            options={[
+              { label: 'Все типы', value: '' },
+              ...['INCOME', 'EXPENSE'].map((type) => ({
+                label: type === 'INCOME' ? 'Доход' : 'Расход',
+                value: type,
+              })),
+            ]}
             id="type"
           />
         </div>
@@ -157,6 +155,7 @@ export function AddTransactionForm() {
             }}
             className="block h-12 rounded-md border-2 border-gray-300 p-3"
             maxDate={new Date()}
+            onKeyDown={(e) => e.preventDefault()}
           />
 
         </div>

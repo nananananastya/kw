@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FaPlus, FaChartPie, FaBullseye, FaCalendarAlt } from 'react-icons/fa';
+import { FaPlus, FaChartPie, FaCalendarAlt } from 'react-icons/fa';
 
 interface QuickAction {
   icon: React.ReactNode;
@@ -30,7 +30,7 @@ const actions: QuickAction[] = [
 ];
 
 export default function QuickActionsHero() {
-  const router = useRouter();
+  const router = useRouter();  // для перехода на др страницу
 
   return (
     <div className="bg-white flex flex-col rounded-2xl justify-center items-center p-6">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '~/trpc/react';
-import ItemList from './itemList';
+import ItemList from '../home/itemList';
 import { GoPlus } from 'react-icons/go';
 import EditCategoryModal from './editCategory';
 import { toast } from 'react-hot-toast';

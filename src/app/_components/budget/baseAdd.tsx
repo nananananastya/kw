@@ -27,11 +27,11 @@ export function AddEntityModal ({ isOpen, onClose, title, fields, onSubmit }: Ad
     if (isOpen) {
       const initialValues: Record<string, string> = {};
       fields.forEach(field => {
-        initialValues[field.name] = '';
+        initialValues[field.name] = '';  // очищаем поле при открытии
       });
       setValues(initialValues);
     }
-  }, [isOpen, fields]);
+  }, [isOpen]);
 
   const handleChange = (name: string, value: string) => {
     setValues(prev => ({ ...prev, [name]: value }));
@@ -45,6 +45,7 @@ export function AddEntityModal ({ isOpen, onClose, title, fields, onSubmit }: Ad
   };
 
   return (
+    // relative z-50 чтобя модалка была выше родительского компонента
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">

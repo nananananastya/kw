@@ -13,9 +13,9 @@ interface TransactionFiltersProps {
     typeFilter: TransactionType | '';
     setTypeFilter: (type: TransactionType | '') => void;
     sortBy: 'amount' | 'date';
-    setSortBy: React.Dispatch<React.SetStateAction<'amount' | 'date'>>;
+    setSortBy: (value: 'amount' | 'date') => void;
     sortOrder: 'asc' | 'desc';
-    setSortOrder: React.Dispatch<React.SetStateAction<'asc' | 'desc'>>;
+    setSortOrder: (value: 'asc' | 'desc') => void;
     categories: Category[];
     budgets: Budget[]; 
     budgetFilter: string;
@@ -40,7 +40,6 @@ interface TransactionFiltersProps {
     budgetFilter,
     setBudgetFilter,
   }: TransactionFiltersProps) => {
-    const typeOptions = ['INCOME', 'EXPENSE', ''];
     const sortByOptions = ['date', 'amount'];
     const sortOrderOptions = ['asc', 'desc'];
   
@@ -57,6 +56,7 @@ interface TransactionFiltersProps {
                 value={startDate}
                 onChange={(date) => setStartDate(date)}
                 className="block w-full p-3 rounded-md border border-gray-300"
+                onKeyDown={(e) => e.preventDefault()}
               />
             </div>
             <div className="flex-col w-full">
@@ -65,6 +65,7 @@ interface TransactionFiltersProps {
                 value={endDate}
                 onChange={(date) => setEndDate(date)}
                 className="block w-full p-3 rounded-md border border-gray-300"
+                onKeyDown={(e) => e.preventDefault()}
               />
             </div>
           </div>
@@ -94,7 +95,13 @@ interface TransactionFiltersProps {
             <Select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as TransactionType | '')}
-              options={typeOptions.map(option => ({ label: option || 'Все типы', value: option }))}
+              options={[
+                { label: 'Все типы', value: '' },
+                ...['INCOME', 'EXPENSE'].map((type) => ({
+                  label: type === 'INCOME' ? 'Доход' : 'Расход',
+                  value: type,
+                })),
+              ]}
               id="type-filter"
             />
           </div>

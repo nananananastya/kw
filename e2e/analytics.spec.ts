@@ -10,7 +10,7 @@ const test = base.extend<{ authedPage: Page }>({
     await page.getByRole('link', { name: 'Sign in' }).click();
     await page.waitForURL('/api/auth/signin');
 
-    await page.getByPlaceholder('email@example.com').fill('na.krash@mail.ru');
+    await page.getByPlaceholder('email@example.com').fill('tatana@mail.ru');
     await page.getByRole('button').click();
 
     await page.goto('http://localhost:1081/');
@@ -47,14 +47,12 @@ test.describe('Страница аналитики', () => {
   });
 
   test('отображение и переключение графика категорий', async ({ authedPage }) => {
-    console.log('Открываю вкладку "Столбчатая"');
     await authedPage.getByRole('button', { name: 'Столбчатая' }).click();
   
-    const barChart = authedPage.locator('svg'); // можно уточнить: authedPage.locator('[data-testid="category-chart"] svg')
+    const barChart = authedPage.locator('svg'); 
     await barChart.first().waitFor({ state: 'visible', timeout: 10000 });
   
     const countBar = await barChart.count();
-    console.log('SVG найдено после столбчатой:', countBar);
     expect(countBar).toBeGreaterThan(0); // хотя бы 1
   
     console.log('Открываю вкладку "Круговая"');
@@ -64,7 +62,6 @@ test.describe('Страница аналитики', () => {
     await pieChart.first().waitFor({ state: 'visible', timeout: 10000 });
   
     const countPie = await pieChart.count();
-    console.log('SVG найдено после круговой:', countPie);
     expect(countPie).toBeGreaterThan(0);
   });
   

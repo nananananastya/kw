@@ -5,7 +5,7 @@ interface TransactionItemProps {
     id: string;
     date: Date; 
     description: string | null;
-    category: { id: string; name: string } | null;
+    category: { id: string; name: string };
     amount: number;
     type: "INCOME" | "EXPENSE";
   };
@@ -16,10 +16,7 @@ export function TransactionItem ({ transaction, onClick }: TransactionItemProps)
   const isIncome = transaction.type === "INCOME";
 
   const formattedDate = transaction.date.toLocaleDateString("ru-RU");
-  const formattedAmount = `${isIncome ? "+" : "-"}₽${transaction.amount.toFixed(2)}`;
-
-  console.log("Transaction Date:", formattedDate);
-
+  const formattedAmount = `${isIncome ? "+" : "-"}₽${transaction.amount.toFixed(2)}`;  // 2 знака после запятой
   return (
     <div
       className="container mx-auto w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 cursor-pointer border-b"

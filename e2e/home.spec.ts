@@ -10,7 +10,7 @@ const test = base.extend<{ authedPage: Page }>({
     await page.getByRole('link', { name: 'Sign in' }).click();
     await page.waitForURL('/api/auth/signin');
 
-    await page.getByPlaceholder('email@example.com').fill('na.krash@mail.ru');
+    await page.getByPlaceholder('email@example.com').fill('tatana@mail.ru');
     await page.getByRole('button').click();
 
     await page.goto('http://localhost:1081/');
@@ -38,8 +38,8 @@ test.describe('Главная страница', () => {
   test('проверка отображения приветственного сообщения и статистики', async ({ authedPage }) => {
     // Ожидаем загрузки страницы и успешной авторизации
     await authedPage.goto('/');
-    await expect(authedPage.locator('main')).toContainText('Добро пожаловать na.krash@mail.ru!');
-    // Переход к сводке (DashboardSummary)
+    await expect(authedPage.locator('main')).toContainText('Добро пожаловать tatana@mail.ru');
+    // Переход к DashboardSummary
     const totalBalance = authedPage.locator('text=Текущий баланс');
     const totalIncome = authedPage.locator('text=Доходы за неделю');
     const totalExpenses = authedPage.locator('text=Расходы за неделю');
