@@ -17,7 +17,7 @@ export default function AddMoneyToGoalModal ({ goalId, isOpen, onClose }: AddMon
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>(''); 
   const { data: userBudgets = [], isLoading } = api.budget.getUserBudgets.useQuery();
-  const decreaseBudgetMutation = api.budget.decreaseBudgetBalance.useMutation();
+  const decreaseBudgetMutation = api.budget.changeBudgetBalance.useMutation();
   const utils = api.useUtils();
 
   const addMoneyMutation = api.goal.addAmountToGoal.useMutation({
@@ -61,6 +61,7 @@ export default function AddMoneyToGoalModal ({ goalId, isOpen, onClose }: AddMon
       decreaseBudgetMutation.mutate({
         budgetId: selectedBudgetId,
         amount: numericAmount,
+        type: "subtract",
       });
 
       addMoneyMutation.mutate({

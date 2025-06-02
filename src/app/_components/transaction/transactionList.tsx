@@ -1,9 +1,8 @@
-'use client';
+'use client'
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { api } from '~/trpc/react';
-import { CategoryType } from '@prisma/client';
 import EditTransactionModal, { TransactionFormData } from './EditTransactionModal';
 import { TransactionItem } from './item';
 import { TransactionFilters } from './transactionFilters';
@@ -26,7 +25,7 @@ export function TransactionList() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budgetFilter, setBudgetFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<CategoryType | ''>('');
+  const [typeFilter, setTypeFilter] = useState<'INCOME' | 'EXPENSE' | ''>(''); // теперь локальный фильтр
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -43,16 +42,19 @@ export function TransactionList() {
     endDate: endDate ?? undefined,
     budgetId: budgetFilter || undefined,
     categoryId: categoryFilter || undefined,
-    type: typeFilter || undefined,
     sortBy,
     sortOrder,
   });
 
-  const transactions = data?.transactions ?? [];
+  const filteredTransactions = (data?.transactions ?? []).filter(t => {
+    if (!typeFilter) return true;
+    return t.category?.type === typeFilter;
+  });
+
   const totalPages = Math.ceil((data?.total ?? 0) / size);  // math.ceil округление вверх
 
   const handleTransactionClick = (id: string | null) => {
-    const transaction = transactions.find((t) => t.id === id);
+    const transaction = filteredTransactions.find((t) => t.id === id);
     if (!transaction) return;
 
     setSelectedTransaction({
@@ -63,7 +65,6 @@ export function TransactionList() {
         ? { id: transaction.category.id, name: transaction.category.name }
         : null,
       amount: transaction.amount,
-      type: transaction.type,
       user: transaction.user
         ? { id: transaction.user.id, email: transaction.user.email ?? '' }
         : null,
@@ -73,28 +74,31 @@ export function TransactionList() {
     });
   };
 
-  const updateTransaction = api.transaction.updateTransaction.useMutation({
-    onSuccess: (result) => {
+const updateTransaction = api.transaction.updateTransaction.useMutation({
+  onSuccess: (result) => {
+    if (result.success) {
       toast.success(result.message || 'Транзакция успешно обновлена');
       setSelectedTransaction(null); 
-      utils.transaction.getUserTransactions.invalidate()
-    },
-    onError: (result) => {
+      utils.transaction.getUserTransactions.invalidate();
+    } else {
       toast.error(result.message || 'Ошибка при обновлении транзакции');
-    },
-  });
+    }
+  },
+  onError: (error) => {
+    toast.error('Ошибка на уровне запроса: ' + error.message);
+  },
+});
 
   const handleTransactionSave = (updatedTransaction: typeof selectedTransaction) => {
     if (!updatedTransaction) return;
 
-    const { id, description, category, amount, type, date } = updatedTransaction;
+    const { id, description, category, amount, date } = updatedTransaction;
 
     updateTransaction.mutate({
       transactionId: id,
       description,
       categoryId: category?.id || '',
       amount,
-      type,
       date,
     });
   };
@@ -106,7 +110,7 @@ export function TransactionList() {
   };
 
   useEffect(() => {  // загрузка при изменении фильтров
-    utils.transaction.getUserTransactions.invalidate()
+    utils.transaction.getUserTransactions.invalidate();
   }, [startDate, endDate, budgetFilter, categoryFilter, typeFilter, sortBy, sortOrder]);
 
   return (
@@ -140,7 +144,7 @@ export function TransactionList() {
           ) : (
             <>
               <ul className="space-y-4">
-                {transactions.map((transaction) => (
+                {filteredTransactions.map((transaction) => (
                   <TransactionItem
                     key={transaction.id}
                     transaction={transaction}

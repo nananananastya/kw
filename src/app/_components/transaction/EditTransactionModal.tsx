@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from 'react';
 import { EditModalWrapper } from '../budget/baseEdit';
@@ -15,18 +15,23 @@ export interface TransactionFormData {
   description: string;
   category: { id: string; name: string } | null;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
   user: { id: string; email: string } | null;
   budget: { id: string; name: string } | null;
-};
+}
 
-export default function EditTransactionModal({ transaction, onClose, onSave } : {
+export default function EditTransactionModal({
+  transaction,
+  onClose,
+  onSave,
+}: {
   transaction: TransactionFormData;
   onClose: () => void;
   onSave: (updatedTransaction: TransactionFormData) => void;
 }) {
   const [formData, setFormData] = useState<TransactionFormData>(transaction);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(transaction.category?.id ?? null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    transaction.category?.id ?? null
+  );
 
   const utils = api.useUtils();
   const deleteMutation = api.transaction.deleteTransaction.useMutation({
@@ -35,13 +40,13 @@ export default function EditTransactionModal({ transaction, onClose, onSave } : 
       onClose();
     },
     onError: (error) => {
-      alert("Ошибка при удалении транзакции: " + error.message);
+      alert('Ошибка при удалении транзакции: ' + error.message);
     },
   });
 
-const { data: categories } = api.category.getCategoriesByBudget.useQuery({
-  budgetId: transaction.budget?.id || '',
-});
+  const { data: categories } = api.category.getCategoriesByBudget.useQuery({
+    budgetId: transaction.budget?.id || '',
+  });
 
   useEffect(() => {
     setFormData(transaction);
@@ -60,65 +65,43 @@ const { data: categories } = api.category.getCategoriesByBudget.useQuery({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    const date = formData.date instanceof Date && !isNaN(formData.date.getTime())
-      ? formData.date
-      : new Date(); 
-  
+
     const updated = {
       ...formData,
-      date,
       category: categories?.find((c) => c.id === selectedCategoryId) ?? null,
+      date: formData.date,
     };
-  
+
     try {
       await onSave(updated);
     } catch (error) {
-
       if (error instanceof Error) {
-        if (error.message === "У вас нет прав на изменение этой транзакции") {
-          toast.error(error.message);
-        } else {
-          toast.error('Неизвестная ошибка при обновлении транзакции');
-        }
+        toast.error(error.message);
+      } else {
+        toast.error('Неизвестная ошибка при обновлении транзакции');
       }
     }
-  }; 
+  };
 
   const handleDelete = async () => {
+    if (!confirm('Вы уверены, что хотите удалить эту транзакцию?')) return;
 
-    const { success, message } = await deleteMutation.mutateAsync({ transactionId: transaction.id });
-  
-    if (!success) {
-      toast.error(message || "У вас нет прав на удаление этой транзакции");
-      return; 
-    }
-  
-    if (confirm("Вы уверены, что хотите удалить эту транзакцию?")) {
-      deleteMutation.mutate(
-        { transactionId: transaction.id },
-        {
-          onSuccess: (data) => {
-            if (data.success) {
-              toast.success("Транзакция успешно удалена");
-              utils.invalidate(); 
-              onClose(); 
-            } else {
-              toast.error(data.message || "Не удалось удалить транзакцию");
-            }
-          },
-          onError: (error) => {
-            toast.error(
-              error instanceof Error
-                ? `Ошибка при удалении транзакции: ${error.message}`
-                : "Неизвестная ошибка"
-            );
-          },
-        }
-      );
+    try {
+      const data = await deleteMutation.mutateAsync({ transactionId: transaction.id });
+
+      if (data.success) {
+        toast.success('Транзакция успешно удалена');
+        utils.invalidate();
+        onClose();
+      } else {
+        toast.error(data.message || 'Не удалось удалить');
+      }
+    } catch (error) {
+      toast.error('Ошибка при удалении транзакции');
     }
   };
-  
+
+
   return (
     <EditModalWrapper
       isOpen={true}
@@ -129,35 +112,26 @@ const { data: categories } = api.category.getCategoriesByBudget.useQuery({
     >
       <div className="space-y-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Пользователь</label>
-          <Input
-            type="text"
-            value={formData.user?.email || 'Не указан'}
-            readOnly
-          />
+          <label>Пользователь</label>
+          <Input type="text" value={formData.user?.email || 'Не указан'} readOnly />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Бюджет</label>
-          <Input
-            type="text"
-            value={formData.budget?.name || 'Не указан'}
-            readOnly
-          />
+          <label>Бюджет</label>
+          <Input type="text" value={formData.budget?.name || 'Не указан'} readOnly />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Описание</label>
+          <label>Описание</label>
           <Input
             type="text"
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
-            placeholder="Описание"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Категория</label>
+          <label>Категория</label>
           <Select
             id="category-select"
             value={selectedCategoryId ?? ''}
@@ -169,43 +143,23 @@ const { data: categories } = api.category.getCategoriesByBudget.useQuery({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Сумма</label>
+          <label>Сумма</label>
           <Input
             type="number"
             value={formData.amount === 0 ? '' : formData.amount.toString()}
             onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
-            placeholder="Сумма"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Тип операции</label>
-          <Select
-            value={formData.type}
-            onChange={(e) =>
-              handleChange('type', e.target.value as 'INCOME' | 'EXPENSE')
-            }
-            options={[
-              { label: 'Доход', value: 'INCOME' },
-              { label: 'Расход', value: 'EXPENSE' },
-            ]}
-            id="transaction-type"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Дата</label>
+          <label>Дата</label>
           <DateField
             value={formData.date}
-            onChange={(date: Date | null) => {
-              if (date && !isNaN(date.getTime())) {
-                handleChange('date', date);
-              } else {
-                handleChange('date', new Date()); 
-              }
-            }}
-            className="w-full border p-2 rounded"
+            onChange={(date: Date | null) =>
+              handleChange('date', date ?? new Date())
+            }
             maxDate={new Date()}
+            className="w-full border p-2 rounded"
             onKeyDown={(e) => e.preventDefault()}
           />
         </div>

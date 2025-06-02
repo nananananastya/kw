@@ -7,7 +7,6 @@ import { Select } from "../select";
 import { DateField } from "../dateField";
 import { Button } from "../button";
 import { toast } from 'react-hot-toast';
-import { CategoryType } from "@prisma/client";
 
 export function AddTransactionForm() {
   const utils = api.useUtils();
@@ -17,7 +16,7 @@ export function AddTransactionForm() {
       if (data.success) {
         toast.success(data.message);
         resetForm();
-        // utils.transaction.getUserTransactions.invalidate();
+        utils.transaction.getUserTransactions.invalidate();
         utils.budget.getBudgetSummary.invalidate()
       } else {
         toast.error(data.message);
@@ -131,21 +130,6 @@ export function AddTransactionForm() {
           )}
         </div>
 
-        <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">Тип операции</label>
-          <Select
-            value={type}
-            onChange={(e) => setType(e.target.value as CategoryType)}
-            options={[
-              { label: 'Все типы', value: '' },
-              ...['INCOME', 'EXPENSE'].map((type) => ({
-                label: type === 'INCOME' ? 'Доход' : 'Расход',
-                value: type,
-              })),
-            ]}
-            id="type"
-          />
-        </div>
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">Краткое описание</label>
           <Input

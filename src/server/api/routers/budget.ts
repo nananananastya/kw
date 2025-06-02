@@ -239,42 +239,47 @@ export const budgetRouter = createTRPCRouter({
 
   // Получение данных для карточек на домашней странице
   summary: protectedProcedure.query(async ({ ctx }) => {
-        const userId = ctx.session.user.id;
-      
-        const budgets = await ctx.db.budgetUser.findMany({
-          where: { userId },
+    const userId = ctx.session.user.id;
+
+    const budgets = await ctx.db.budgetUser.findMany({
+      where: { userId },
+      include: {
+        budget: {
           include: {
-            budget: {
+            transactions: {
               include: {
-                transactions: true,
+                category: true,
               },
             },
           },
-        });
-      
-        const now = new Date();
-        const start = startOfWeek(now, { weekStartsOn: 1 }); 
-        const end = endOfWeek(now, { weekStartsOn: 1 }); 
-      
-        let totalBalance = 0;
-        let totalIncome = 0;
-        let totalExpenses = 0;
-      
-        for (const { budget } of budgets) {
-          totalBalance += budget.amount ?? 0;
-      
-          for (const tx of budget.transactions) {
-            if (tx.date >= start && tx.date <= end) {
-              if (tx.type === 'INCOME') totalIncome += tx.amount;
-              else if (tx.type === 'EXPENSE') totalExpenses += tx.amount;
-            }
-          }
+        },
+      },
+    });
+
+    const now = new Date();
+    const start = startOfWeek(now, { weekStartsOn: 1 });
+    const end = endOfWeek(now, { weekStartsOn: 1 });
+
+    let totalBalance = 0;
+    let totalIncome = 0;
+    let totalExpenses = 0;
+
+    for (const { budget } of budgets) {
+      totalBalance += budget.amount ?? 0;
+
+      for (const tx of budget.transactions) {
+        if (tx.date >= start && tx.date <= end) {
+          if (tx.category.type === 'INCOME') totalIncome += tx.amount;
+          else if (tx.category.type === 'EXPENSE') totalExpenses += tx.amount;
         }
-      
-        return {
-          totalBalance,
-          totalIncome,
-          totalExpenses,
-        };
-      }),   
+      }
+    }
+
+    return {
+      totalBalance,
+      totalIncome,
+      totalExpenses,
+    };
+  }),
+ 
 });

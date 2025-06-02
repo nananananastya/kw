@@ -1,6 +1,6 @@
 import { Select } from '../select';
 import { DateField } from '../dateField';
-import { Category, TransactionType, Budget } from '@prisma/client';
+import { Category, CategoryType, Budget } from '@prisma/client';
 import React from 'react';
 
 interface TransactionFiltersProps {
@@ -10,8 +10,8 @@ interface TransactionFiltersProps {
     setEndDate: (date: Date | null) => void;
     categoryFilter: string;
     setCategoryFilter: (category: string) => void;
-    typeFilter: TransactionType | '';
-    setTypeFilter: (type: TransactionType | '') => void;
+    typeFilter: CategoryType | '';
+    setTypeFilter: (type: CategoryType | '') => void;
     sortBy: 'amount' | 'date';
     setSortBy: (value: 'amount' | 'date') => void;
     sortOrder: 'asc' | 'desc';
@@ -94,7 +94,7 @@ interface TransactionFiltersProps {
             <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="type-filter">Тип транзакции</label>
             <Select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as TransactionType | '')}
+              onChange={(e) => setTypeFilter(e.target.value as CategoryType | '')}
               options={[
                 { label: 'Все типы', value: '' },
                 ...['INCOME', 'EXPENSE'].map((type) => ({
